@@ -6,7 +6,7 @@ library(rstan)
 library(coda)
 
 openGraph = function( width=7 , height=7 , mag=1.0 , ... ) {
-  if ( .Platform$OS.type != "windows" ) { # Mac OS, Linux
+  if ( Sys.info()['sysname']=="Darwin") {
     tryInfo = try( X11( width=width*mag , height=height*mag , type="cairo" , 
                         ... ) )
     if ( class(tryInfo)=="try-error" ) {
@@ -14,7 +14,10 @@ openGraph = function( width=7 , height=7 , mag=1.0 , ... ) {
       graphics.off() 
       X11( width=width*mag , height=height*mag , type="cairo" , ... )
     }
-  } else { # Windows OS
+  } else if (Sys.info()['sysname']=="Linux") {
+    pdf(file=file, width=width*mag, height=height*mag)
+
+  } else {
     tryInfo = try( windows( width=width*mag , height=height*mag , ... ) )
     if ( class(tryInfo)=="try-error" ) {
       lineInput = readline("WARNING: Previous graphics windows will be closed because of too many open windows.\nTO CONTINUE, PRESS <ENTER> IN R CONSOLE.\n")
