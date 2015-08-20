@@ -79,9 +79,15 @@ for ( parName in paramNames ) {
 }
 
 # traceplot
-openGraph(width=7, height=5)
-rstan::traceplot(stanFit, pars=paramNames, nrow=2, ncol=3)
-saveGraph( file=paste(plotPath,saveName,"_traceplot",sep=""), type=saveType)
+if (Sys.info()['sysname']=="Linux") {
+  postscript(file=paste(plotPath,saveName,"_traceplot.eps",sep=""), horizontal=FALSE, paper="special", height=5, width=7)
+  rstan::traceplot(stanFit, pars=paramNames, nrow=2, ncol=3)
+  dev.off()
+} else {
+  openGraph(width=7, height=5)
+  rstan::traceplot(stanFit, pars=paramNames, nrow=2, ncol=3)
+  saveGraph( file=paste(plotPath,saveName,"_traceplot",sep=""), type=saveType)
+}
 
 mcmcMat = as.matrix(codaSamples,chains=TRUE)
 chainLength = nrow( mcmcMat )

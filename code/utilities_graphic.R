@@ -6,7 +6,7 @@ library(rstan)
 library(coda)
 
 openGraph = function( width=7 , height=7 , mag=1.0 , ... ) {
-  if ( Sys.info()['sysname']=="Darwin") {
+  if ( .Platform$OS.type != "windows" ) { # Mac OS, Linux
     tryInfo = try( X11( width=width*mag , height=height*mag , type="cairo" , 
                         ... ) )
     if ( class(tryInfo)=="try-error" ) {
@@ -14,10 +14,7 @@ openGraph = function( width=7 , height=7 , mag=1.0 , ... ) {
       graphics.off() 
       X11( width=width*mag , height=height*mag , type="cairo" , ... )
     }
-  } else if (Sys.info()['sysname']=="Linux") {
-    pdf(file=file, width=width*mag, height=height*mag)
-
-  } else {
+  } else { # Windows OS
     tryInfo = try( windows( width=width*mag , height=height*mag , ... ) )
     if ( class(tryInfo)=="try-error" ) {
       lineInput = readline("WARNING: Previous graphics windows will be closed because of too many open windows.\nTO CONTINUE, PRESS <ENTER> IN R CONSOLE.\n")
@@ -280,7 +277,8 @@ diagMCMC = function( codaObject , parName=varnames(codaObject)[1] ,
   DBDAplColors = c("skyblue","black","royalblue","steelblue")
 
   if ( Sys.info()['sysname']=="Linux") {
-    pdf( file=paste0(saveName,"Diag",parName,".pdf",sep=""), height=5, width=7)
+    #pdf( file=paste0(saveName,"Diag",parName,".pdf",sep=""), height=5, width=7)
+    postscript(file=paste0(saveName,"Diag",parName,".eps",sep=""), horizontal=FALSE, paper="special", height=5, width=7)
   } else {
     openGraph(height=5,width=7)
   }
