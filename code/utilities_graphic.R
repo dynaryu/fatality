@@ -278,7 +278,13 @@ diagStanFit = function( stanFit , parName ,
 diagMCMC = function( codaObject , parName=varnames(codaObject)[1] ,
                      saveName=NULL , saveType="jpg" ) {
   DBDAplColors = c("skyblue","black","royalblue","steelblue")
-  openGraph(height=5,width=7)
+
+  if ( Sys.info()['sysname']=="Linux") {
+    pdf( file=paste0(saveName,"Diag",parName,".pdf",sep=""), height=5, width=7)
+  } else {
+    openGraph(height=5,width=7)
+  }
+
   par( mar=0.5+c(3,4,1,0) , oma=0.1+c(0,0,2,0) , mgp=c(2.25,0.7,0) , 
        cex.lab=1.5 )
   layout(matrix(1:4,nrow=2))
@@ -304,7 +310,11 @@ diagMCMC = function( codaObject , parName=varnames(codaObject)[1] ,
   DbdaDensPlot(codaObject,parName,plColors=DBDAplColors)
   mtext( text=parName , outer=TRUE , adj=c(0.5,0.5) , cex=2.0 )
   if ( !is.null(saveName) ) {
-    saveGraph( file=paste0(saveName,"Diag",parName), type=saveType)
+    if ( Sys.info()['sysname']=="Linux") {
+      dev.off()
+    } else {
+      saveGraph( file=paste0(saveName,"Diag",parName), type=saveType)
+    }
   }
 }
 

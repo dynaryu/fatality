@@ -75,13 +75,13 @@ paramNames <- paramNames[-length(paramNames)] # remove the last
 
 for ( parName in paramNames ) {
   diagMCMC( codaObject=codaSamples, parName=parName , 
-          saveName=paste(plotPath,saveName,'_',sep=""), saveType= 'png')
+          saveName=paste(plotPath,saveName,'_',sep=""), saveType=saveType)
 }
 
 # traceplot
 openGraph(width=7, height=5)
 rstan::traceplot(stanFit, pars=paramNames, nrow=2, ncol=3)
-saveGraph( file=paste(plotPath,saveName,"_traceplot",sep=""), type='png')
+saveGraph( file=paste(plotPath,saveName,"_traceplot",sep=""), type=saveType)
 
 mcmcMat = as.matrix(codaSamples,chains=TRUE)
 chainLength = nrow( mcmcMat )
