@@ -4,23 +4,33 @@ graphics.off() # This closes all of R's graphics windows.
 rm(list=ls())  # Careful! This clears all of R's memory!
 require(rstan)
 
+# environment
+if (Sys.info()['sysname']=="Darwin") {
+  comPath = '/Users/hyeuk/Project/fatality/'
+  codePath = paste(comPath,'code/',sep="")
+  plotPath = paste(comPath,'plot/',sep="")
+  dataPath = paste(comPath,'data/',sep="") 
+  saveType='eps'
+} else {
+  comPath = '/home/547/hxr547/scratch/fatality/'
+  codePath = paste(comPath,'code/',sep="")
+  plotPath = paste(comPath,'plot/',sep="")
+  dataPath = paste(comPath,'data/',sep="") 
+  saveType='pdf'
+}
+
 # load utilities
-source("utilities_graphic.R")
-source("utilities.R")
+source(paste(codePath,"utilities_graphic.R",sep=""))
+source(paste(codePath,"utilities.R",sep=""))
 
 # load stan models
-source("stan_models.R")
+source(paste(codePath,"stan_models.R",sep=""))
 
 # Translate to C++ and compile to DSO:
 stanDso <- stan_model( model_code = model_bernlnorm)
 
-# environment
-plotPath = '/Users/hyeuk/Project/fatality/plot/'
-dataPath = '/Users/hyeuk/Project/fatality/data/'
-
-saveName = 'wald_bernlnorm_trnc'; saveType='eps'
-#marPlot = TRUE; pairsPlot = TRUE; comPlot= TRUE
-marPlot = FALSE; pairsPlot = FALSE; comPlot= FALSE
+saveName = 'wald_bernlnorm_trnc'; 
+marPlot = TRUE;
 
 # read fatality data
 dat <- read.csv(paste(dataPath,'DATA_WALD_COR_ROUND_12_Feb_2013.csv',sep=""), header=0)
