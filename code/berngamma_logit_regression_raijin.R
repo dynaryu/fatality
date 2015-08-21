@@ -29,7 +29,7 @@ source(paste(codePath,"utilities.R",sep=""))
 source(paste(codePath,"stan_models.R",sep=""))
 
 # Translate to C++ and compile to DSO:
-stanDso <- stan_model( model_code = model_berngamma_log)
+stanDso <- stan_model( model_code = model_berngamma_logit)
 
 saveName = 'wald_berngamma_logit'; 
 marPlot = TRUE;
