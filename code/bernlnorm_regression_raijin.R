@@ -4,6 +4,8 @@ graphics.off() # This closes all of R's graphics windows.
 rm(list=ls())  # Careful! This clears all of R's memory!
 require(rstan)
 
+set.seed(123)
+
 # environment
 if (Sys.info()['sysname']=="Darwin") {
   comPath = '/Users/hyeuk/Project/fatality/'
@@ -123,8 +125,6 @@ if (marPlot) {
     }  
   }
 }
-
-set.seed(123)
 
 nsamples <- 5
 temp <- estimate_fat_rate_HDI_bernlnorm(nsamples)

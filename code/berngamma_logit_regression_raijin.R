@@ -4,6 +4,8 @@ graphics.off() # This closes all of R's graphics windows.
 rm(list=ls())  # Careful! This clears all of R's memory!
 require(rstan)
 
+set.seed(123)
+
 # environment
 if (Sys.info()['sysname']=="Darwin") {
   comPath = '/Users/hyeuk/Project/fatality/'
@@ -29,7 +31,7 @@ source(paste(codePath,"stan_models.R",sep=""))
 # Translate to C++ and compile to DSO:
 stanDso <- stan_model( model_code = model_berngamma_log)
 
-saveName = 'wald_berngamma_log_trnc'; 
+saveName = 'wald_berngamma_logit'; 
 marPlot = TRUE;
 
 # read fatality data
@@ -79,9 +81,15 @@ for ( parName in paramNames ) {
 }
 
 # traceplot
-openGraph(width=7, height=5)
-rstan::traceplot(stanFit, pars=paramNames, nrow=2, ncol=3)
-saveGraph( file=paste(plotPath,saveName,"_traceplot",sep=""), type=saveType)
+if (Sys.info()['sysname']=="Linux") {
+  png(file=paste(plotPath,saveName,"_traceplot.png",sep=""), height=5, width=7, units="in", res=72)
+  rstan::traceplot(stanFit, pars=paramNames, nrow=2, ncol=3)
+  dev.off()
+} else {
+  openGraph(width=7, height=5)
+  rstan::traceplot(stanFit, pars=paramNames, nrow=2, ncol=3)
+  saveGraph( file=paste(plotPath,saveName,"_traceplot",sep=""), type=saveType)
+}
 
 mcmcMat = as.matrix(codaSamples,chains=TRUE)
 chainLength = nrow( mcmcMat )
@@ -96,21 +104,30 @@ chain$dummy <- NULL
 row.names(summaryInfo) <- paramNames
 
 if (marPlot) { 
-  openGraph(width=3*3, height=3*2)
+
+  if (Sys.info()['sysname']=="Linux") {
+    png(file=paste(plotPath,saveName,"_PostMarg.png",sep=""), height=3*2, width=3*3, units="in", res=300)
+  } else {
+    openGraph(width=3*3, height=3*2)
+  }  
+
   layout( matrix( 1:6 , nrow=2, byrow=TRUE) )
 
   for ( parName in paramNames ) {
     histInfo = plotPost( chain[[parName]] , cex.lab = 1.75 , showCurve=FALSE, xlab=parName) #, main=paste("a=",parameters$a) )
   }
+
   if ( !is.null(saveName) ) {
-  saveGraph( file=paste(plotPath, saveName,"_PostMarg",sep=""), type=saveType)
+    if (Sys.info()['sysname']=="Linux") {
+      dev.off()
+    } else {
+      saveGraph( file=paste(plotPath, saveName,"_PostMarg",sep=""), type=saveType)
+    }  
   }
 }
 
-set.seed(123)
-
 nsamples <- 5
-temp <- estimate_fat_rate_HDI_berngamma_log(nsamples)
+temp <- estimate_fat_rate_HDI_berngamma_logit(nsamples)
 fat_rate <- temp[[1]]
 fat_rate_HDI <- temp[[2]]
 

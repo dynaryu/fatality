@@ -17,21 +17,22 @@ parameters {
   real<lower=0> s; // sigma lognormal constant cov
 }
 model {
-    a ~ cauchy(0, 2.5);
-    b ~ cauchy(0, 2.5); 
-    c ~ cauchy(0, 2.5); 
-    d ~ cauchy(0, 2.5); 
-    s ~ cauchy(0, 2.5); // half cauchy
+  a ~ cauchy(0, 2.5);
+  b ~ cauchy(0, 2.5); 
+  c ~ cauchy(0, 2.5); 
+  d ~ cauchy(0, 2.5); 
+  s ~ cauchy(0, 2.5); // half cauchy
 
-    for (n in 1:Ndata) {
-    (y[n] == 0) ~ bernoulli_logit(c + d * x[n]);
-    if (y[n] > 0)
-       y[n] ~ lognormal(a + b*x[n], s) T[,1.0];
-    }    
+  for (n in 1:Ndata) {
+  (y[n] == 0) ~ bernoulli_logit(c + d * x[n]);
+  if (y[n] > 0)
+     y[n] ~ lognormal(a + b*x[n], s) T[,1.0];
+  }    
 }
 "
 
 # bernoullie-gamma truncated [0, 1]
+# took so long
 # note that gamma in stan takes shape(alpha) and rate(beta)
 # mean = shape/rate, variance = shape/(rate**2) 
 # mean = link(a+b*x) (either exp or inv_logit)
@@ -49,17 +50,20 @@ parameters {
   real<lower=0> s; // sigma lognormal constant cov
 }
 model {
-    a ~ cauchy(0, 2.5);
-    b ~ cauchy(0, 2.5); 
-    c ~ cauchy(0, 2.5); 
-    d ~ cauchy(0, 2.5); 
-    s ~ cauchy(0, 2.5); // half cauchy
+  a ~ cauchy(0, 2.5);
+  b ~ cauchy(0, 2.5); 
+  c ~ cauchy(0, 2.5); 
+  d ~ cauchy(0, 2.5); 
+  s ~ cauchy(0, 2.5); // shape, half cauchy
 
-    for (n in 1:Ndata) {
-    (y[n] == 0) ~ bernoulli_logit(c + d * x[n]);
-    if (y[n] > 0)
-       y[n] ~ gamma(s, s / inv_logit(a + b*x[n]))  T[,1.0]; // shape, rate
-    }    
+  for (n in 1:Ndata) {
+  (y[n] == 0) ~ bernoulli_logit(c + d * x[n]);
+  if (y[n] > 0)
+    y[n] ~ gamma(s, s / inv_logit(a + b*x[n])); // shape, rate
+    /* 
+    y[n] ~ gamma(s, s / inv_logit(a + b*x[n]))  T[,1.0]; // shape, rate
+    */
+  }    
 }
 "
 
@@ -78,19 +82,22 @@ parameters {
   real b; // a+bx
   real c; // parameter of linear predictor
   real d; // c+dx
-  real<lower=0> s; // sigma lognormal constant cov
+  real<lower=0> s; // shape, half cauchy
 }
 model {
-    a ~ cauchy(0, 2.5);
-    b ~ cauchy(0, 2.5); 
-    c ~ cauchy(0, 2.5); 
-    d ~ cauchy(0, 2.5); 
-    s ~ cauchy(0, 2.5); // half cauchy
+  a ~ cauchy(0, 2.5);
+  b ~ cauchy(0, 2.5); 
+  c ~ cauchy(0, 2.5); 
+  d ~ cauchy(0, 2.5); 
+  s ~ cauchy(0, 2.5); // half cauchy
 
-    for (n in 1:Ndata) {
-    (y[n] == 0) ~ bernoulli_logit(c + d * x[n]);
-    if (y[n] > 0)
-       y[n] ~ gamma(s, s / exp(a + b*x[n]))  T[,1.0]; // shape, rate
-    }    
+  for (n in 1:Ndata) {
+  (y[n] == 0) ~ bernoulli_logit(c + d * x[n]);
+  if (y[n] > 0)
+    y[n] ~ gamma(s, s / exp(a + b*x[n])); // shape, rate
+    /*
+    y[n] ~ gamma(s, s / exp(a + b*x[n])) T[,1.0]; // shape, rate
+    */
+  }    
 }
 "
