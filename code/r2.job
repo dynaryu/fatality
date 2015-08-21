@@ -2,7 +2,7 @@
 #PBS -l wd
 #PBS -m e
 #PBS -q normal
-#PBS -l ncpus=4,walltime=01:30:00,mem=8GB
+#PBS -l ncpus=4,walltime=00:10:00,mem=4GB
 
 module load intel-cc/14.3.174
 module load intel-fc/14.3.174
@@ -13,6 +13,6 @@ export LD_RUN_PATH=/short/y57/hxr547/apps/JAGS/lib:$LD_RUN_PATH
 export LD_LIBRARY_PATH=/short/y57/hxr547/apps/JAGS/lib:$LD_LIBRARY_PATH
 export LIBRARY_PATH=/short/y57/hxr547/apps/JAGS/lib:$LIBRARY_PATH
 
-time R --vanilla < berngamma_log_regression_raijin.R > output_wald_berngamma_log
+time R --vanilla < berngamma_regression_raijin.R > output_worden_berngamma_logit
 
 

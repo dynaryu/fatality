@@ -29,7 +29,7 @@ source(paste(codePath,"utilities.R",sep=""))
 source(paste(codePath,"stan_models.R",sep=""))
 
 data_str = 'worden'
-link_str = 'log'
+link_str = 'logit'
 saveName = paste(data_str,'_berngamma_',link_str,sep="")
 marPlot = TRUE;
 
@@ -43,7 +43,7 @@ if (link_str=='log') {
 # read fatality data
 if (data_str=='wald') {
   dat <- read.csv(paste(dataPath,'DATA_WALD_COR_ROUND_12_Feb_2013.csv',sep=""), header=0)
-} else if (data_str=='worden' {
+} else if (data_str=='worden') {
   dat <- read.csv(paste(dataPath,'DATA_WORDEN_COR_ROUND_12_Feb_2013.csv',sep=""), header=0)
 }
 names(dat) <- c("pop","fat","mmi","mmi_bin","id")

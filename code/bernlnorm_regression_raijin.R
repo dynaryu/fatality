@@ -38,7 +38,7 @@ stanDso <- stan_model( model_code = model_bernlnorm)
 # read fatality data
 if (data_str=='wald') {
   dat <- read.csv(paste(dataPath,'DATA_WALD_COR_ROUND_12_Feb_2013.csv',sep=""), header=0)
-} else if (data_str=='worden' {
+} else if (data_str=='worden') {
   dat <- read.csv(paste(dataPath,'DATA_WORDEN_COR_ROUND_12_Feb_2013.csv',sep=""), header=0)
 }
 names(dat) <- c("pop","fat","mmi","mmi_bin","id")
