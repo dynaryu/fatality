@@ -133,6 +133,7 @@ fat_rate_HDI <- temp[[2]]
 
 # remove any fatality rate >= 1.0
 ff <- which(fat_rate >= 1.0, arr.ind=TRUE)
+show(dim(ff))
 fat_rate <- fat_rate[,-ff[,2]] 
 
 fat_by_event <- pop %*% fat_rate # nevents x (nsamples*chainLength) 
