@@ -278,7 +278,9 @@ diagMCMC = function( codaObject , parName=varnames(codaObject)[1] ,
 
   if ( Sys.info()['sysname']=="Linux") {
     #pdf( file=paste0(saveName,"Diag",parName,".pdf",sep=""), height=5, width=7)
-    postscript(file=paste0(saveName,"Diag",parName,".eps",sep=""), horizontal=FALSE, paper="special", height=5, width=7)
+    #setEPS()
+    #postscript(file=paste0(saveName,"Diag",parName,".eps",sep=""), horizontal=FALSE, paper="special", height=5, width=7)
+    png(file=paste0(saveName,"Diag",parName,".png",sep=""), height=5, width=7, units="in", res=72)
   } else {
     openGraph(height=5,width=7)
   }
@@ -315,5 +317,3 @@ diagMCMC = function( codaObject , parName=varnames(codaObject)[1] ,
     }
   }
 }
-
-

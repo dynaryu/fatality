@@ -80,7 +80,7 @@ for ( parName in paramNames ) {
 
 # traceplot
 if (Sys.info()['sysname']=="Linux") {
-  postscript(file=paste(plotPath,saveName,"_traceplot.eps",sep=""), horizontal=FALSE, paper="special", height=5, width=7)
+  png(file=paste(plotPath,saveName,"_traceplot.png",sep=""), height=5, width=7, units="in", res=72)
   rstan::traceplot(stanFit, pars=paramNames, nrow=2, ncol=3)
   dev.off()
 } else {
@@ -102,14 +102,25 @@ chain$dummy <- NULL
 row.names(summaryInfo) <- paramNames
 
 if (marPlot) { 
-  openGraph(width=3*3, height=3*2)
+
+  if (Sys.info()['sysname']=="Linux") {
+    png(file=paste(plotPath,saveName,"_PostMarg.png",sep=""), height=3*2, width=3*3, units="in", res=300)
+  } else {
+    openGraph(width=3*3, height=3*2)
+  }  
+
   layout( matrix( 1:6 , nrow=2, byrow=TRUE) )
 
   for ( parName in paramNames ) {
     histInfo = plotPost( chain[[parName]] , cex.lab = 1.75 , showCurve=FALSE, xlab=parName) #, main=paste("a=",parameters$a) )
   }
+
   if ( !is.null(saveName) ) {
-  saveGraph( file=paste(plotPath, saveName,"_PostMarg",sep=""), type=saveType)
+    if (Sys.info()['sysname']=="Linux") {
+      dev.off()
+    } else {
+      saveGraph( file=paste(plotPath, saveName,"_PostMarg",sep=""), type=saveType)
+    }  
   }
 }
 
