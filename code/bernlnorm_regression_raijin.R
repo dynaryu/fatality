@@ -28,14 +28,19 @@ source(paste(codePath,"utilities.R",sep=""))
 # load stan models
 source(paste(codePath,"stan_models.R",sep=""))
 
+data_str = 'worden'
+saveName = paste(data_str,'_bernlnorm_trnc',sep=""); 
+marPlot = TRUE;
+
 # Translate to C++ and compile to DSO:
 stanDso <- stan_model( model_code = model_bernlnorm)
 
-saveName = 'wald_bernlnorm_trnc'; 
-marPlot = TRUE;
-
 # read fatality data
-dat <- read.csv(paste(dataPath,'DATA_WALD_COR_ROUND_12_Feb_2013.csv',sep=""), header=0)
+if (data_str=='wald') {
+  dat <- read.csv(paste(dataPath,'DATA_WALD_COR_ROUND_12_Feb_2013.csv',sep=""), header=0)
+} else if (data_str=='worden' {
+  dat <- read.csv(paste(dataPath,'DATA_WORDEN_COR_ROUND_12_Feb_2013.csv',sep=""), header=0)
+}
 names(dat) <- c("pop","fat","mmi","mmi_bin","id")
 dat$rat <- dat$fat/dat$pop
 
