@@ -8,13 +8,13 @@ set.seed(123)
 
 # environment
 if (Sys.info()['sysname']=="Darwin") {
-  comPath = '/Users/hyeuk/Project/fatality/'
+  comPath = '/Users/hyeuk/Projects/fatality/'
   codePath = paste(comPath,'code/',sep="")
   plotPath = paste(comPath,'plot/',sep="")
   dataPath = paste(comPath,'data/',sep="") 
   saveType='eps'
 } else {
-  comPath = '/home/547/hxr547/scratch/fatality/'
+  comPath = '/home/547/hxr547/Projects/fatality/'
   codePath = paste(comPath,'code/',sep="")
   plotPath = paste(comPath,'plot/',sep="")
   dataPath = paste(comPath,'data/',sep="") 
@@ -41,6 +41,7 @@ if (link_str=='log') {
 } else if (link_str=='logit') {
   stanDso <- stan_model( model_code = model_berngamma_logit)
 }
+
 # read fatality data
 if (data_str=='wald') {
   dat <- read.csv(paste(dataPath,'DATA_WALD_COR_ROUND_12_Feb_2013.csv',sep=""), header=0)
@@ -191,6 +192,7 @@ if ( !is.null(saveName) ) {
   #write.csv(df.fat_rate_inasafe, file=paste(dataPath,saveName,'_fat_rate_inasafe.csv',sep=""), row.names=FALSE)
  
   #saveRDS(fat_rate_HDI, file=paste(dataPath,saveName,'_fat_rate_HDI.RDS',sep=''))
+  write.csv(fat_rate_by_mmi, file=paste(dataPath,saveName,'_fat_rate_by_mmi.csv',sep=""), row.names=FALSE)
   saveRDS(fat_by_event, paste(dataPath,saveName, '_fat_by_event.RDS',sep=""))
   saveRDS(fatHDI, paste(dataPath, saveName, '_fatHDI.RDS',sep=""))
   saveRDS(prob_mag, paste(dataPath, saveName, '_prob_mag.RDS',sep=""))
