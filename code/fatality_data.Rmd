@@ -1,0 +1,101 @@
+---
+title: "Exploratory analysis of Indonesian fatality data"
+author: "Hyeuk Ryu"
+date: "17 August 2015"
+output: pdf_document
+---
+
+1. read data
+
+```{r}
+dat <- read.csv('DATA_WALD_COR_ROUND_12_Feb_2013.csv',header=0)
+names(dat) <- c("pop","fat","mmi","mmi_bin","id")
+dat$rat <- dat$fat/dat$pop
+```
+
+2. data by MMI 
+
+```{r, echo=FALSE}
+aggregate(dat$rat, by=list(dat$mmi_bin), length)
+boxplot(rat~mmi_bin, dat)
+```
+
+2. Divide into zero and non-zero  
+
+```{r, echo=FALSE}
+aggregate(dat$rat, by=list(dat$mmi_bin), length)
+boxplot(rat~mmi_bin, dat)
+```
+
+3. fatality rate at MMI 8.5
+
+- fitting data to lognormal distribution
+
+```{r, echo=FALSE, fig.show='asis'}
+y85 <- dat$rat[dat$mmi_bin == 8.5]
+y85
+# ignore zero values
+library(fitdistrplus)
+y85_lnorm <- fitdist(y85, "lnorm", method="mle")
+plot(y85_lnorm)
+```
+
+- fitting data to gamma distribution
+
+```{r, echo=FALSE, warning=FALSE}
+y85_gamma <- fitdist(y85, "gamma", method="mle")
+plot(y85_gamma)
+```
+
+- fitting data to beta distribution
+```{r, echo=FALSE, warning=FALSE}
+y85_beta <- fitdist(y85, "beta", method="mle")
+dev.new()
+plot(y85_beta)
+```
+
+- compare fitted distributions
+
+```{r}
+qqcomp(list(y85_lnorm, y85_gamma, y85_beta), legendtext=c("lognormal", "gamma", "beta"))
+```
+
+4. fatality rat at MMI 8 and 8.5
+
+```{r, echo=FALSE}
+y8 <- dat$rat[dat$mmi_bin == 8.0]
+y8t <- y8[y8>0.0]
+```
+
+- fitting data to lognormal distribution
+
+```{r, echo=FALSE}
+y8_lnorm <- fitdist(y8t, "lnorm", method="mle")
+plot(y8_lnorm)
+```
+
+- fitting data to gamma distribution
+
+```{r, echo=FALSE, warning=FALSE}
+y8_gamma <- fitdist(y8t, "gamma", method="mle")
+plot(y8_gamma)
+```
+
+- fitting data to beta distribution
+
+```{r, echo=FALSE, warning=FALSE}
+y8_beta <- fitdist(y8t, "beta", method="mle")
+plot(y8_beta)
+```
+
+- compare fitted distributions
+
+```{r}
+qqcomp(list(y8_lnorm, y8_gamma, y8_beta), legendtext=c("lognormal", "gamma", "beta"))
+#ks.test(y85, "plnorm", y85_lnorm$estimate)
+```
+
+5. log(rat) vs. mmi_bin
+
+```{r}
+plot(mmi_bin, log(rat))
