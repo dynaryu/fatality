@@ -1,0 +1,16 @@
+
+*.so
+*.pyc
+src/test/
+build/
+outputs/
+
+# os x specific
+.DS_Store
+
+# pycharm
+.idea
+
+*.png
+*.RDS
+*.eps
