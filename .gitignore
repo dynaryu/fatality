@@ -1,4 +1,5 @@
-
+*.job.e*
+*.job.o*
 *.so
 *.pyc
 src/test/
