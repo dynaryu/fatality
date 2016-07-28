@@ -13,6 +13,6 @@ export LD_RUN_PATH=/short/y57/hxr547/apps/JAGS/lib:$LD_RUN_PATH
 export LD_LIBRARY_PATH=/short/y57/hxr547/apps/JAGS/lib:$LD_LIBRARY_PATH
 export LIBRARY_PATH=/short/y57/hxr547/apps/JAGS/lib:$LIBRARY_PATH
 
-time R --vanilla < berngamma_regression_raijin.R > output_worden_berngamma_logit
+time R --vanilla < berngamma_regression_raijin.R > output_case3_berngamma_log_add
 
 

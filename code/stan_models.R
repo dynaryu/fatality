@@ -101,3 +101,46 @@ model {
   }    
 }
 "
+
+# same as b-gamma but added generated quantities for prediction
+model_berngamma_log_add = "
+data {
+  int<lower=0> Ndata ;
+  vector<lower=0>[Ndata] x ; // MMI
+  vector<lower=0, upper=1>[Ndata] y ; // fatality rate
+  
+  int<lower=0> Nnew ; 
+  vector[Nnew] xnew ; // xnew
+}
+parameters {
+  real a; // parameter of linear predictor
+  real b; // a+bx
+  real c; // parameter of linear predictor
+  real d; // c+dx
+  real<lower=0> s; // shape, half cauchy
+}
+model {
+  a ~ cauchy(0, 2.5);
+  b ~ cauchy(0, 2.5); 
+  c ~ cauchy(0, 2.5); 
+  d ~ cauchy(0, 2.5); 
+  s ~ cauchy(0, 2.5); // half cauchy
+
+  for (n in 1:Ndata) {
+  (y[n] == 0) ~ bernoulli_logit(c + d * x[n]);
+  if (y[n] > 0)
+    y[n] ~ gamma(s, s / exp(a + b*x[n])); // shape, rate
+    /*
+    y[n] ~ gamma(s, s / exp(a + b*x[n])) T[,1.0]; // shape, rate
+    */
+  }    
+}
+generated quantities{
+  vector[Nnew] ynew ;
+  for (n in 1:Nnew) {
+    ynew[n] <- bernoulli_rng(1.0 - inv_logit(c + d*xnew[n]));
+    if (ynew[n] > 0)
+      ynew[n] <- gamma_rng(s, s / exp(a + b*xnew[n])); 
+   }
+}
+"

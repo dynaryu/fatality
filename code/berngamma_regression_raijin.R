@@ -28,38 +28,47 @@ source(paste(codePath,"utilities.R",sep=""))
 # load stan models
 source(paste(codePath,"stan_models.R",sep=""))
 
-data_str = 'worden'
-link_str = 'logit'
+data_str = 'case3'
+link_str = 'log_add'
 saveName = paste(data_str,'_berngamma_',link_str,sep="")
 marPlot = TRUE;
 
 # Translate to C++ and compile to DSO:
 if (link_str=='log') {
   stanDso <- stan_model( model_code = model_berngamma_log)
+} else if (link_str=='log_add') {
+  stanDso <- stan_model( model_code = model_berngamma_log_add)
 } else if (link_str=='logit') {
   stanDso <- stan_model( model_code = model_berngamma_logit)
 }
-
 # read fatality data
 if (data_str=='wald') {
   dat <- read.csv(paste(dataPath,'DATA_WALD_COR_ROUND_12_Feb_2013.csv',sep=""), header=0)
 } else if (data_str=='worden') {
   dat <- read.csv(paste(dataPath,'DATA_WORDEN_COR_ROUND_12_Feb_2013.csv',sep=""), header=0)
+} else if (data_str=='case1') {
+  dat <- read.csv(paste(dataPath,'case1.csv',sep=""), header=0)
+} else if (data_str=='case2') {
+  dat <- read.csv(paste(dataPath,'case2.csv',sep=""), header=0)
+} else if (data_str=='case3') {
+  dat <- read.csv(paste(dataPath,'case3.csv',sep=""), header=0)
 }
 names(dat) <- c("pop","fat","mmi","mmi_bin","id")
 dat$rat <- dat$fat/dat$pop
-
-dataList = list(
-  x = dat$mmi, 
-  y = dat$rat,
-  Ndata = length(dat$mmi)
-)
 
 # read expo cat data
 dummy <- read_expo_cat(paste(dataPath,'EXPO_CAT_2007_12.csv', sep=""))
 pop <- dummy[[1]]
 expo_cat <- dummy[[2]]
 mmi_list <- dummy[[3]]
+
+dataList = list(
+  x = dat$mmi, 
+  y = dat$rat,
+  Ndata = length(dat$mmi),
+  Nnew = length(mmi_list),
+  xnew = mmi_list
+)
 
 nChains = 4
 burnInSteps = 1000
@@ -82,8 +91,9 @@ stanFit <- sampling( object=stanDso ,
 # diagplot #2
 codaSamples = mcmc.list( lapply( 1:ncol(stanFit) , 
                                  function(x) { mcmc(as.array(stanFit)[,x,]) } ) )
-paramNames = varnames(codaSamples)
-paramNames <- paramNames[-length(paramNames)] # remove the last
+#paramNames = varnames(codaSamples)
+#paramNames <- paramNames[-length(paramNames)] # remove the last
+paramNames <- c('a','b','c','d','s')
 
 for ( parName in paramNames ) {
   diagMCMC( codaObject=codaSamples, parName=parName , 
@@ -136,22 +146,29 @@ if (marPlot) {
   }
 }
 
-nsamples <- 5
-if (link_str=='log') {
-  temp <- estimate_fat_rate_HDI_berngamma_log(nsamples)
-} else if (link_str=='logit') {
-  temp <- estimate_fat_rate_HDI_berngamma_logit(nsamples)
+# extract predicted fatality rate by MMI
+sel_col <- vector("character", length(mmi_list))
+for (i in seq(1, length(mmi_list))) { 
+  sel_col[[i]] <- paste('ynew[', i, ']', sep='') 
 }
-fat_rate <- temp[[1]]
-fat_rate_HDI <- temp[[2]]
+fat_rate_by_mmi <- mcmcMat[, sel_col]
+
+#nsamples <- 5
+#if (link_str=='log') {
+#  temp <- estimate_fat_rate_HDI_berngamma_log(nsamples)
+#} else if (link_str=='logit') {
+#  temp <- estimate_fat_rate_HDI_berngamma_logit(nsamples)
+#}
+#fat_rate <- temp[[1]]
+#fat_rate_HDI <- temp[[2]]
 
 # remove any fatality rate >= 1.0
-ff <- which(fat_rate >= 1.0, arr.ind=TRUE)
-if (nrow(ff) > 0) {
-  fat_rate <- fat_rate[,-ff[,2]] 
-}
+#ff <- which(fat_rate >= 1.0, arr.ind=TRUE)
+#if (nrow(ff) > 0) {
+#  fat_rate <- fat_rate[,-ff[,2]] 
+#}
 
-fat_by_event <- pop %*% fat_rate # nevents x (nsamples*chainLength) 
+fat_by_event <- pop %*% t(fat_rate_by_mmi) # nevents x (nsamples*chainLength) 
 
 # HDI of estimated fatality
 dummy = compute_HDI_prob(fat_by_event)
@@ -162,18 +179,18 @@ count_order <- count_order_match(prob_mag, expo_cat)
 show(count_order)
 
 if ( !is.null(saveName) ) {
-  #saveRDS(mcmcMat, file=paste(dataPath,saveName,'_mcmcMat.RDS',sep=""))
+  saveRDS(mcmcMat, file=paste(dataPath,saveName,'_mcmcMat.RDS',sep=""))
   write.csv(summaryInfo , file=paste(dataPath,saveName,"_SummaryInfo.csv",sep="")) 
-  saveRDS(fat_rate, file=paste(dataPath,saveName,'_fat_rate.RDS',sep=''))
+  #saveRDS(fat_rate, file=paste(dataPath,saveName,'_fat_rate.RDS',sep=''))
 
-  df.fat_rate <- as.data.frame(t(fat_rate))
-  names(df.fat_rate) <- mmi_list
+  #df.fat_rate <- as.data.frame(t(fat_rate))
+  #names(df.fat_rate) <- mmi_list
   # remove .5 for inasafe
-  inasafe_mmi_list <- seq(4.0, 10.0)
-  df.fat_rate_inasafe <- df.fat_rate[as.character(inasafe_mmi_list)]
-  write.csv(df.fat_rate_inasafe, file=paste(dataPath,saveName,'_fat_rate_inasafe.csv',sep=""), row.names=FALSE)
+  #inasafe_mmi_list <- seq(4.0, 10.0)
+  #df.fat_rate_inasafe <- df.fat_rate[as.character(inasafe_mmi_list)]
+  #write.csv(df.fat_rate_inasafe, file=paste(dataPath,saveName,'_fat_rate_inasafe.csv',sep=""), row.names=FALSE)
  
-  saveRDS(fat_rate_HDI, file=paste(dataPath,saveName,'_fat_rate_HDI.RDS',sep=''))
+  #saveRDS(fat_rate_HDI, file=paste(dataPath,saveName,'_fat_rate_HDI.RDS',sep=''))
   saveRDS(fat_by_event, paste(dataPath,saveName, '_fat_by_event.RDS',sep=""))
   saveRDS(fatHDI, paste(dataPath, saveName, '_fatHDI.RDS',sep=""))
   saveRDS(prob_mag, paste(dataPath, saveName, '_prob_mag.RDS',sep=""))
