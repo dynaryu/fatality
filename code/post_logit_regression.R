@@ -4,7 +4,7 @@ graphics.off() # This closes all of R's graphics windows.
 rm(list=ls())  # Careful! This clears all of R's memory!
 # CTRL + L clear console
 #require(rstan)
-source("DBDA2E-utilities.R")
+#source("DBDA2E-utilities.R")
 #require('qmap')
 library(MASS)
 require(ggplot2)
@@ -69,48 +69,38 @@ read_expo_cat <- function(fileName = '/Users/hyeuk/Downloads/EXPO_CAT_2007_12.cs
   return(list(pop, expo_cat, mmi_list))
 } 
 
-
-# Model based on Wald
+# Model based on case1
 #mcmcMat_file = 'wald_berngamma_n15kmcmcMat.RDS'
 #mcmcMat_file = 'case3_berngamma_logit_fat_rate.RDS'
-marPlot = TRUE
+marPlot = FALSE #TRUE
 #saveName ='wald_berngamma_n15k'
-saveName = 'case3_berngamma'
+saveName = 'case1_berngamma'
 saveType = 'eps'
 
 dummy <- read_expo_cat(fileName = '/Users/hyeuk/Projects/fatality/data/EXPO_CAT_2007_12.csv')
 pop <- dummy[[1]]
 expo_cat <- dummy[[2]]
 
+datapath = '/Users/hyeuk/Projects/fatality/data/'
+plotpath = '/Users/hyeuk/Projects/fatality/plot/'
+mcmcMat_file = paste(datapath, 'case1_berngamma_log_add_mcmcMat.RDS', sep="")
 
-#dat <- readRDS('DATA_WALD_COR_ROUND_12_Feb_2013.RDS')
-#fat_rate_HDI <- readRDS('wald_berngamma_n15kfat_rate_HDI.RDS')
-dat <- read.csv('/Users/hyeuk/Projects/fatality/data/case3.csv', header = FALSE)
-names(dat) <- c('pop', 'fat', 'mmi', 'mmi_round', 'id')
-dat$rat <- dat$fat/dat$pop
-
-fat_rate_HDI <- readRDS('case3_berngamma_logit_fat_rate_HDI.RDS')
-fat_rate_HDI <- as.data.frame(fat_rate_HDI)
-names(fat_rate_HDI) <- c("L","U")
-
-mmi_list = seq(4,10,0.5)
-fat_rate_HDI$mmi_bin <- mmi_list
-
-mcmcMat <- readRDS(mcmcMat_file)
-chainLength = nrow( mcmcMat )
-summaryInfo = NULL
-
-chain_a = mcmcMat[,"a"]
-chain_b = mcmcMat[,"b"]
-chain_c = mcmcMat[,"c"]
-chain_d = mcmcMat[,"d"]
-chain_s = mcmcMat[,"s"]
+# mcmcMat <- readRDS(mcmcMat_file)
+# chainLength = nrow( mcmcMat )
+# summaryInfo = NULL
+# 
+# chain_a = mcmcMat[,"a"]
+# chain_b = mcmcMat[,"b"]
+# chain_c = mcmcMat[,"c"]
+# chain_d = mcmcMat[,"d"]
+# chain_s = mcmcMat[,"s"]
 
 
 # figure 5
 if (marPlot) { 
   # marginal distribution
-  openGraph(width=9,height=5)
+  #openGraph(width=9,height=5)
+  dev.new(width=9, height=5)
   layout( matrix( 1:6 , nrow=2) )
 
   histInfo = plotPost( chain_a , cex.lab = 1.75 , showCurve=FALSE, xlab=bquote(a)) #, main=paste("a=",parameters$a) )
@@ -119,25 +109,60 @@ if (marPlot) {
   histInfo = plotPost( chain_d , cex.lab = 1.75 , showCurve=FALSE, xlab=bquote(d)) #, main=paste("a=",parameters$a) )
   histInfo = plotPost( chain_s , cex.lab = 1.75 , showCurve=FALSE, xlab=bquote(alpha)) #, main=paste("a=",parameters$a) )
 
-  if ( !is.null(saveName) ) {
-  saveGraph( file=paste(saveName,"PostMarg",sep=""), type=saveType)
-  }
+  saveGraph( file=paste(plotpath,"figure5.eps",sep=""), type=saveType)
 }
 
+###############################################################################
 # figure 6
 # comparison with data
+#dat <- readRDS('DATA_WALD_COR_ROUND_12_Feb_2013.RDS')
+#fat_rate_HDI <- readRDS('wald_berngamma_n15kfat_rate_HDI.RDS')
+dat <- read.csv(paste(datapath, 'case1.csv', sep=""), header = FALSE)
+names(dat) <- c('pop', 'fat', 'mmi', 'mmi_round', 'id')
+dat$rat <- dat$fat/dat$pop
+
+fat_rate_by_mmi <- read.csv(paste(datapath, 'case2_berngamma_log_add_fat_rate_by_mmi.csv', sep=""))
+mmi_list = seq(4, 10, 0.5)
+
+# zero 
+prob_zero_by_mmi <- apply(fat_rate_by_mmi==0, FUN=sum, MARGIN = 2)/dim(fat_rate_by_mmi)[1]
+
+# fat_rate
+fat_rate_HDI <- matrix(NA, ncol=3, nrow=dim(fat_rate_by_mmi)[2])
+
+for (i in 1:length(mmi_list)) {
+  x <- fat_rate_by_mmi[[paste('ynew.',i,'.',sep="")]]
+  #x <- x[x>0]
+  dummy <- HDIofMCMC(x)
+  fat_rate_HDI[[i, 1]] <- mmi_list[i]
+  fat_rate_HDI[[i, 2]] <- dummy[1]
+  fat_rate_HDI[[i, 3]] <- dummy[2]
+}
+
+#fat_rate_HDI <- readRDS(paste(datapath, '', sep=""))
+fat_rate_HDI <- as.data.frame(fat_rate_HDI)
+names(fat_rate_HDI) <- c("mmi","L","U")
+
+# mmi_list = seq(4,10,0.5)
+# fat_rate_HDI$mmi_bin <- mmi_list
+
+
+
 if (comPlot) {
 
   fig6 <- ggplot(data = dat, aes(x=mmi, y=rat)) +
    geom_point() +
-   geom_errorbar(data = fat_rate_HDI, aes(ymax = U, ymin = L, y=0.5*(L+U), x = mmi_bin), width=0.2, colour='red')
-
+   geom_errorbar(data = fat_rate_HDI, aes(ymax = U, ymin = L, y=0.5*(L+U), x = mmi), width=0.2, colour='red')
 
    nPredCurves=50
    xComb = seq(4,10,length=501)
    yComb <- numeric(length=501)
    PostPred <- data.frame(yComb)
 
+   # PostPred <- rbind(as.double(mmi_list), as.double(fat_rate_by_mmi[1,]))
+   # PostPred <- as.data.frame(t(PostPred))
+   # fig6 <- fig6 + geom_line(data = PostPred, aes(x=V1, y=V2), colour='skyblue', size=0.1)
+   
   # Data with superimposed regression lines and noise distributions:
    for ( i in floor(seq(from=1,to=chainLength,length=nPredCurves)) ) {
     

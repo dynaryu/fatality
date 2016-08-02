@@ -127,17 +127,27 @@ row.names(summaryInfo) <- paramNames
 if (marPlot) { 
 
   if (Sys.info()['sysname']=="Linux") {
-    png(file=paste(plotPath,saveName,"_PostMarg.png",sep=""), height=3*2, width=3*3, units="in", res=300)
+    png(file=paste(plotPath,saveName,"_PostMarg.png",sep=""), height=3*2, width=3*3, units="in", res=600)
   } else {
     openGraph(width=3*3, height=3*2)
   }  
 
-  layout( matrix( 1:6 , nrow=2, byrow=TRUE) )
+  # layout( matrix( 1:6 , nrow=2, byrow=TRUE) )
 
-  for ( parName in paramNames ) {
-    histInfo = plotPost( chain[[parName]] , cex.lab = 1.75 , showCurve=FALSE, xlab=parName) #, main=paste("a=",parameters$a) )
-  }
+  # for ( parName in paramNames ) {
+  #   histInfo = plotPost( chain[[parName]] , cex.lab = 1.75 , showCurve=FALSE, xlab=parName) #, main=paste("a=",parameters$a) )
+  # }
 
+  layout( matrix( 1:6 , nrow=2) )
+  
+  histInfo = plotPost( chain[['a']] , cex.lab = 1.75 , showCurve=FALSE, xlab=bquote(a)) #, main=paste("a=",parameters$a) )
+  histInfo = plotPost( chain[['c']] , cex.lab = 1.75 , showCurve=FALSE, xlab=bquote(c)) #, main=paste("a=",parameters$a) )
+  histInfo = plotPost( chain[['b']] , cex.lab = 1.75 , showCurve=FALSE, xlab=bquote(b)) #, main=paste("a=",parameters$a) )
+  histInfo = plotPost( chain[['d']] , cex.lab = 1.75 , showCurve=FALSE, xlab=bquote(d)) #, main=paste("a=",parameters$a) )
+  histInfo = plotPost( chain[['s']] , cex.lab = 1.75 , showCurve=FALSE, xlab=bquote(alpha)) #, main=paste("a=",parameters$a) )
+  
+  # saveGraph( file=paste(plotpath,"figure5.eps",sep=""), type=saveType)
+  
   if ( !is.null(saveName) ) {
     if (Sys.info()['sysname']=="Linux") {
       dev.off()

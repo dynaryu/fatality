@@ -7,6 +7,22 @@ require(ggplot2)
 library(scales)
 library(reshape2)
 
+process_csvdata <- function(csvfileName) {
+  
+  dat <- read.csv(csvfileName, header=0)
+  names(dat) <- c("pop","fat","mmi","mmi_bin","id")
+  
+  #dat$fat[dat$fat==0] = 1.0e-3 # very small number instead of 0 fatality
+  dat$rat <- dat$fat/dat$pop
+  ndat <- dat[dat$fat > 0, ]
+  
+  #dat.df <- data.frame(dat$mmi, dat$rat)
+  #names(dat.df) <- c("MMI","rate")
+  
+  #saveRDS()
+  return(ndat)
+}
+
 #library(ggplot2)
 
 read_expo_cat <- function(fileName = '/Users/hyeuk/Downloads/EXPO_CAT_2007_12.csv') {
@@ -386,32 +402,14 @@ ggsave('figure5.eps',  width = 8, height = 8, unit="cm",  myPlot1)
 # fatHDI_corr_n100[fatHDI_corr_n100[,1]< 1.0e-1,1] = 0.1
 # plotCI(fatHDI_corr_n100, expo_cat$obs, expo_cat$eqID, 'xxx', saveType)
 
-process_csvdata <- function(csvfileName) {
-
-  dat <- read.csv(csvfileName, header=0)
-  names(dat) <- c("pop","fat","mmi","mmi_bin","id")
-
-  #dat$fat[dat$fat==0] = 1.0e-3 # very small number instead of 0 fatality
-  dat$rat <- dat$fat/dat$pop
-
-  #dat.df <- data.frame(dat$mmi, dat$rat)
-  #names(dat.df) <- c("MMI","rate")
-
-  #saveRDS()
-  return(dat)
-}
-
-
 # plot of fatality data
-csvfileName_worden = '/Users/hyeuk/Projects/fatality/data/DATA_WORDEN_COR_ROUND_12_Feb_2013.csv'
-dat_worden <- process_csvdata(csvfileName_worden)
-
-csvfileName_wald = '/Users/hyeuk/Projects/fatality/data/DATA_WALD_COR_ROUND_12_Feb_2013.csv'
-dat_wald <- process_csvdata(csvfileName_wald)
+#csvfileName_worden = '/Users/hyeuk/Projects/fatality/data/DATA_WORDEN_COR_ROUND_12_Feb_2013.csv'
+datapath = '/Users/hyeuk/Projects/fatality/data/'
+dat1 <- process_csvdata(paste(datapath,'case1.csv', sep=""))
+dat2 <- process_csvdata(paste(datapath,'case2.csv', sep=""))
 
 # exploratory analysis
-
-dat <- dat_worden
+# dat <- dat_worden
 
 #sd_ <- tapply(dat$rat, dat$mmi_bin, sd)
 
@@ -421,76 +419,73 @@ dat <- dat_worden
 #qplot(names(sd_), log(mean_)) + xlab("MMI") + ylab("log mean of fatality rate")
   #dev.copy2eps(file='log_mean_fatality.eps')
 
-myPlot7 <- ggplot(dat, aes(x=mmi,y=rat)) +
- geom_point() +
+# myPlot7 <- ggplot(dat1, aes(x=mmi,y=rat)) +
+#  geom_point() +
+#  scale_y_log10(labels = trans_format("log10", math_format(10^.x)),limits=c(10^-7, 10^-1)) +
+#  #geom_smooth() +
+#  #scale_y_log10(breaks = trans_breaks("log10", function(y) 10^y),
+#  #                  labels = trans_format("log10", math_format(10^.x)),
+#  #                  limits = c(10^-12, 10^-3)) +
+#  xlab("MMI") +
+#  ylab("Fatality rate") +
+#  theme_bw(base_size=10)
+# 
+# ggsave('figure4b.eps',  width = 8, height = 8, unit="cm",  myPlot7)
+
+
+myPlot8 <- ggplot(dat1, aes(x=factor(mmi_bin),y=rat)) +
+ geom_boxplot() +
+ geom_point(position = position_jitter(width = 0.3), size=0.5, colour='red')+
  scale_y_log10(labels = trans_format("log10", math_format(10^.x)),limits=c(10^-7, 10^-1)) +
- #geom_smooth() +
- #scale_y_log10(breaks = trans_breaks("log10", function(y) 10^y),
- #                  labels = trans_format("log10", math_format(10^.x)),
- #                  limits = c(10^-12, 10^-3)) +
  xlab("MMI") +
  ylab("Fatality rate") +
  theme_bw(base_size=10)
+ggsave('figure4a.eps',  width = 12, height = 8, unit="cm",  myPlot8)
 
-ggsave('figure7.eps',  width = 8, height = 8, unit="cm",  myPlot7)
-
-
-myPlot8 <- ggplot(dat, aes(x=factor(mmi_bin),y=rat)) +
- geom_boxplot() +
- xlab("MMI") +
- ylab("Fatality rate") +
- theme_bw(base_size=10)
-ggsave('figure8.eps',  width = 8, height = 8, unit="cm",  myPlot8)
-
-mf_labeller <- function(var, value){
-    value <- as.character(value)
-    if (var=="id") {
-        value[value=="1"]   <- "Nias"
-        value[value=="2"]   <- "Yogyakarta"
-        value[value=="3"]   <- "West Sumatra"
-        value[value=="4"]   <- "West Java"
-        #value[value=="5"]   <- "All events"
-    }
-    return(value)
-}
-
-myPlot9 <- ggplot(dat, aes(x=mmi_bin,y=rat)) +
- geom_boxplot() +
- facet_grid(~id, labeller = mf_labeller) +
- xlab("MMI") +
- ylab("Fatality rate") +
- theme_bw(base_size=10)
-ggsave('figure9.eps',  width = 8, height = 8, unit="cm",  myPlot8)
-
-
-
+# mf_labeller <- function(var, value){
+#     value <- as.character(value)
+#     if (var=="id") {
+#         value[value=="1"]   <- "Nias"
+#         value[value=="2"]   <- "Yogyakarta"
+#         value[value=="3"]   <- "West Sumatra"
+#         value[value=="4"]   <- "West Java"
+#         #value[value=="5"]   <- "All events"
+#     }
+#     return(value)
+# }
+# 
+# myPlot9 <- ggplot(dat_total, aes(x=mmi_bin,y=rat)) +
+#  geom_boxplot() +
+#  facet_grid(~id, labeller = mf_labeller) +
+#  xlab("MMI") +
+#  ylab("Fatality rate") +
+#  theme_bw(base_size=10)
+# ggsave('figure9.eps',  width = 8, height = 8, unit="cm",  myPlot8)
 
 # aggregate
+dat1$GMICE <- 'Finite Fault'
+dat2$GMICE <- 'Point Source'
 
-dat_worden$GMICE <- ' Worden et al. (2012)'
-dat_wald$GMICE <- 'Wald et al. (1999)'
+dat1_all <- dat1
+dat1$id <- 5
 
-dat_worden_all <- dat_worden
-dat_worden_all$id <- 5
+dat2_all <- dat2
+dat2_all$id <- 5
 
-dat_wald_all <- dat_wald
-dat_wald_all$id <- 5
-
-dat_total <- rbind(dat_worden, dat_wald, dat_wald_all, dat_worden_all)
+dat_total <- rbind(dat1, dat2, dat1_all, dat2_all)
 dat_total$id <- factor(dat_total$id)
 
-mf_labeller <- function(var, value){
-    value <- as.character(value)
-    if (var=="id") {
-        value[value=="1"]   <- "Nias"
-        value[value=="2"]   <- "Yogyakarta"
-        value[value=="3"]   <- "West Sumatra"
-        value[value=="4"]   <- "West Java"
-        value[value=="5"]   <- "All events"
-    }
-    return(value)
-}
-
+# mf_labeller <- function(var, value){
+#     value <- as.character(value)
+#     if (var=="id") {
+#         value[value=="1"]   <- "Nias"
+#         value[value=="2"]   <- "Yogyakarta"
+#         value[value=="3"]   <- "West Sumatra"
+#         value[value=="4"]   <- "West Java"
+#         value[value=="5"]   <- "All events"
+#     }
+#     return(value)
+# }
 
 label_metrics <- function(x) {
     x[x == "1"]   <- "Nias"
@@ -503,15 +498,14 @@ label_metrics <- function(x) {
 
 param_labeller <- ggplot2::as_labeller(label_metrics)
 
-
-
 #myPlot <- ggplot(dat_total,aes(x=mmi, y=rat, shape=id))+
 
-myPlot2 <- ggplot(data=dat_total, aes_string(x=mmi, y=rat)) +
- facet_grid(GMICE~id, labeller = label_metrics(id)) +
- geom_point(size=1) +      # Use hollow circles
- scale_x_continuous(limits=c(3.5,9.0)) +
- #facet_wrap(~GMICE,ncol=2) +
+myPlot2 <- ggplot(data=dat_total, aes_string(x='mmi', y='rat')) +
+ facet_grid(GMICE~id, labeller = param_labeller) +
+ geom_point(size=0.5) +      # Use hollow circles
+ scale_x_continuous(limits=c(3.5,8.5)) +
+ scale_y_log10(labels = trans_format("log10", math_format(10^.x)),limits=c(10^-7, 10^-1)) +
+  #facet_wrap(~GMICE,ncol=2) +
  #scale_shape_manual(values=c(15,16,17,18)) + # Use a hollow circle and triangle
  #scale_shape_discrete(name="EQ event",
  #                         breaks=c("1", "2", "4", "3"),
@@ -522,7 +516,7 @@ myPlot2 <- ggplot(data=dat_total, aes_string(x=mmi, y=rat)) +
  ylab("Fatality rate") +
  theme_bw(base_size=10)
 
-ggsave('figure6c.eps',  width = 12, height = 8, unit="cm",  myPlot1)
+ggsave('figure3.eps',  width = 12, height = 8, unit="cm",  myPlot2)
 
  #theme(legend.position="right", legend.key = element_rect(colour = NA),
  # legend.title = element_text(size = 6),
@@ -534,34 +528,34 @@ ggsave('figure6c.eps',  width = 12, height = 8, unit="cm",  myPlot1)
 
 
 
-myPlot <- ggplot(dat_total,aes(x=mmi, y=rat, shape=id))+
- geom_point(size=1) +      # Use hollow circles
- scale_x_continuous(limits=c(3.5,9.0)) +
- facet_wrap(~GMICE,ncol=2) +
- #scale_shape_manual(values=c(15,16,17,18)) + # Use a hollow circle and triangle
- scale_shape_discrete(name="EQ event",
-                         breaks=c("1", "2", "4", "3"),
-                         labels=c("Nias", "Yogyakarta", "West Java","West Sumatra"), solid=FALSE) +
- #guides(color=guide_legend(override.aes=list(fill=NA))) +
- #guides(colour = guide_legend(nrow = 2)) +
- xlab("MMI") +
- ylab("Fatality rate") +
- theme_bw(base_size=10) +
- theme(legend.position="right", legend.key = element_rect(colour = NA),
-  legend.title = element_text(size = 6),
-  legend.text=element_text(size=6))
+# myPlot <- ggplot(dat_total,aes(x=mmi, y=rat, shape=id))+
+#  geom_point(size=1) +      # Use hollow circles
+#  scale_x_continuous(limits=c(3.5,9.0)) +
+#  facet_wrap(~GMICE,ncol=2) +
+#  #scale_shape_manual(values=c(15,16,17,18)) + # Use a hollow circle and triangle
+#  scale_shape_discrete(name="EQ event",
+#                          breaks=c("1", "2", "4", "3"),
+#                          labels=c("Nias", "Yogyakarta", "West Java","West Sumatra"), solid=FALSE) +
+#  #guides(color=guide_legend(override.aes=list(fill=NA))) +
+#  #guides(colour = guide_legend(nrow = 2)) +
+#  xlab("MMI") +
+#  ylab("Fatality rate") +
+#  theme_bw(base_size=10) +
+#  theme(legend.position="right", legend.key = element_rect(colour = NA),
+#   legend.title = element_text(size = 6),
+#   legend.text=element_text(size=6))
+# 
+# ggsave('figure6.eps',  width = 16, height = 8, unit="cm",  myPlot)
 
-ggsave('figure6.eps',  width = 16, height = 8, unit="cm",  myPlot)
 
-
- geom_bar(stat="identity", width=0.5, fill='grey')+
- coord_flip() +
- scale_x_discrete(labels= label_str) +
- geom_point(data=event1_,aes(x,y), col='red', size=4) +
- #facet_wrap(~eqID,ncol=1) +
- ylab("Probability") +
- xlab("Fatality ranges") +
- theme_bw(base_size=10)
+ # geom_bar(stat="identity", width=0.5, fill='grey')+
+ # coord_flip() +
+ # scale_x_discrete(labels= label_str) +
+ # geom_point(data=event1_,aes(x,y), col='red', size=4) +
+ # #facet_wrap(~eqID,ncol=1) +
+ # ylab("Probability") +
+ # xlab("Fatality ranges") +
+ # theme_bw(base_size=10)
 
 
 
