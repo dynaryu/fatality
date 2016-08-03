@@ -33,7 +33,7 @@ process_csvdata <- function(csvfileName) {
 datapath = '/Users/hyeuk/Projects/fatality/data/'
 plotpath = '/Users/hyeuk/Projects/fatality/plot/'
 dat1 <- process_csvdata(paste(datapath,'case1.csv', sep=""))
-dat2 <- process_csvdata(paste(datapath,'case2.csv', sep=""))
+dat3 <- process_csvdata(paste(datapath,'case3.csv', sep=""))
 
 # exploratory analysis
 # dat <- dat_worden
@@ -67,16 +67,16 @@ myPlot8 <- ggplot(dat1, aes(x=factor(mmi_bin),y=rat)) +
   xlab("MMI") +
   ylab("Fatality rate") +
   theme_bw(base_size=10)
-ggsave(paste(plotpath,'figure4a.eps', sep=""), width = 12, height = 8, unit="cm",  myPlot8)
+ggsave(paste(plotpath,'figure4a_case1.eps', sep=""), width = 12, height = 8, unit="cm",  myPlot8)
 
-myPlot8b <- ggplot(dat2, aes(x=factor(mmi_bin),y=rat)) +
+myPlot8b <- ggplot(dat3, aes(x=factor(mmi_bin),y=rat)) +
   geom_boxplot() +
   geom_point(position = position_jitter(width = 0.3), size=0.5, colour='red')+
   scale_y_log10(labels = trans_format("log10", math_format(10^.x)),limits=c(10^-7, 10^-1)) +
   xlab("MMI") +
   ylab("Fatality rate") +
   theme_bw(base_size=10)
-ggsave(paste(plotpath,'figure4b.eps', sep=""), width = 12, height = 8, unit="cm",  myPlot8b)
+ggsave(paste(plotpath,'figure4a_case3.eps', sep=""), width = 12, height = 8, unit="cm",  myPlot8b)
 
 # mf_labeller <- function(var, value){
 #     value <- as.character(value)
@@ -99,16 +99,16 @@ ggsave(paste(plotpath,'figure4b.eps', sep=""), width = 12, height = 8, unit="cm"
 # ggsave('figure9.eps',  width = 8, height = 8, unit="cm",  myPlot8)
 
 # aggregate
-dat1$GMICE <- 'Finite Fault'
-dat2$GMICE <- 'Point Source'
+dat1$GMICE <- 'BMKG'
+dat3$GMICE <- 'EXPO-CAT'
 
 dat1_all <- dat1
-dat1$id <- 5
+dat1_all$id <- 5
 
-dat2_all <- dat2
-dat2_all$id <- 5
+dat3_all <- dat3
+dat3_all$id <- 5
 
-dat_total <- rbind(dat1, dat2, dat1_all, dat2_all)
+dat_total <- rbind(dat1, dat3, dat1_all, dat3_all)
 dat_total$id <- factor(dat_total$id)
 
 # mf_labeller <- function(var, value){
@@ -139,7 +139,7 @@ param_labeller <- ggplot2::as_labeller(label_metrics)
 myPlot2 <- ggplot(data=dat_total, aes_string(x='mmi', y='rat')) +
   facet_grid(GMICE~id, labeller = param_labeller) +
   geom_point(size=0.5) +      # Use hollow circles
-  scale_x_continuous(limits=c(3.5,8.5)) +
+  scale_x_continuous(limits=c(3.5,9.5), breaks=seq(4.0, 9.0, 1.0)) +
   scale_y_log10(labels = trans_format("log10", math_format(10^.x)),limits=c(10^-7, 10^-1)) +
   #facet_wrap(~GMICE,ncol=2) +
   #scale_shape_manual(values=c(15,16,17,18)) + # Use a hollow circle and triangle
@@ -152,7 +152,7 @@ myPlot2 <- ggplot(data=dat_total, aes_string(x='mmi', y='rat')) +
   ylab("Fatality rate") +
   theme_bw(base_size=10)
 
-ggsave(paste(plotpath,'figure3.eps', sep=""),  width = 12, height = 8, unit="cm",  myPlot2)
+ggsave(paste(plotpath,'figure3_by_setting.eps', sep=""),  width = 16, height = 8, unit="cm",  myPlot2)
 
 #theme(legend.position="right", legend.key = element_rect(colour = NA),
 # legend.title = element_text(size = 6),

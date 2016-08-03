@@ -11,6 +11,16 @@ require(ggplot2)
 library(scales)
 library(reshape2)
 
+# (0,1) -> (-inf, inf)
+logit <- function(p) {
+  log(p/(1-p))
+}
+
+# [-inf, inf] -> (0, 1)
+inv_logit <- function(x) {
+  1/(1+exp(-x))
+}
+
 count_order_match2 <- function(prob_mag, expo_cat) {
 
   nevents <- length(expo_cat$mag_obs)
@@ -85,7 +95,7 @@ datapath = '/Users/hyeuk/Projects/fatality/data/'
 plotpath = '/Users/hyeuk/Projects/fatality/plot/'
 mcmcMat_file = paste(datapath, 'case1_berngamma_log_add_mcmcMat.RDS', sep="")
 
-# mcmcMat <- readRDS(mcmcMat_file)
+mcmcMat <- readRDS(mcmcMat_file)
 # chainLength = nrow( mcmcMat )
 # summaryInfo = NULL
 # 
@@ -121,7 +131,7 @@ dat <- read.csv(paste(datapath, 'case1.csv', sep=""), header = FALSE)
 names(dat) <- c('pop', 'fat', 'mmi', 'mmi_round', 'id')
 dat$rat <- dat$fat/dat$pop
 
-fat_rate_by_mmi <- read.csv(paste(datapath, 'case2_berngamma_log_add_fat_rate_by_mmi.csv', sep=""))
+fat_rate_by_mmi <- read.csv(paste(datapath, 'case1_berngamma_log_add_fat_rate_by_mmi.csv', sep=""))
 mmi_list = seq(4, 10, 0.5)
 
 # zero 
@@ -145,52 +155,163 @@ names(fat_rate_HDI) <- c("mmi","L","U")
 
 # mmi_list = seq(4,10,0.5)
 # fat_rate_HDI$mmi_bin <- mmi_list
+#######
+# logscale
+######
+fig6 <- ggplot(data = dat, aes(x=mmi, y=rat)) +
+  geom_point() +  
+geom_errorbar(data = fat_rate_HDI, aes(ymax = U, ymin = L, y=0.5*(L+U), x = mmi), width=0.1, colour='red') +
+scale_y_log10(labels = trans_format("log10", math_format(10^.x)),limits=c(10^-7, 10^0)) +
+scale_x_continuous(limits=c(3.5,10.5), breaks=seq(4.0, 10.0, 1.0))
+#geom_point(data = dat, aes(x=mmi, y=rat)) +
+# geom_errorbar(data = fat_rate_HDI, aes(ymax = U, ymin = L, y=0.5*(L+U), x = mmi), width=0.2, colour='red')
+# scale_y_log10(labels = trans_format("log10", math_format(10^.x)),limits=c(10^-7, 10^-1)) +
+ # geom_errorbar(data = fat_rate_HDI, aes(ymax = U, ymin = L, y=0.5*(L+U), x = mmi), width=0.2, colour='red')
+# geom_errorbar(data = fat_rate_HDI, aes(ymax = U, ymin = L), width=0.2, colour='red')
 
-
-
-if (comPlot) {
-
-  fig6 <- ggplot(data = dat, aes(x=mmi, y=rat)) +
-   geom_point() +
-   geom_errorbar(data = fat_rate_HDI, aes(ymax = U, ymin = L, y=0.5*(L+U), x = mmi), width=0.2, colour='red')
-
-   nPredCurves=50
-   xComb = seq(4,10,length=501)
-   yComb <- numeric(length=501)
-   PostPred <- data.frame(yComb)
-
-   # PostPred <- rbind(as.double(mmi_list), as.double(fat_rate_by_mmi[1,]))
-   # PostPred <- as.data.frame(t(PostPred))
-   # fig6 <- fig6 + geom_line(data = PostPred, aes(x=V1, y=V2), colour='skyblue', size=0.1)
-   
-  # Data with superimposed regression lines and noise distributions:
-   for ( i in floor(seq(from=1,to=chainLength,length=nPredCurves)) ) {
-    
-    PostPred$yComb <- exp(chain_a[i] + chain_b[i]*xComb)
-    PostPred$xComb <- xComb
-
-    fig6 <- fig6 + geom_line(data = PostPred, aes(x=xComb, y=yComb), colour='skyblue', size=0.1)
-  }    
-
-  PostPred$sengara <- 10^(0.622*xComb-8.033)
-
-  fig6 <- fig6 + geom_line(data = PostPred, aes(x=xComb, y=sengara), linetype=2, size=0.5)
-
-  fig6 <- fig6 + theme_bw(base_size=10) +
-  xlab("MMI") + ylab("Fatality rate") 
+ #nPredCurves=50
+ yComb <- numeric(length=length(mmi_list))
+ PostPred <- data.frame(yComb)
+ PostPred$xComb <- mmi_list
  
-  if ( !is.null(saveName) ) {
-    ggsave(paste('fig6_',saveName, '.', saveType, sep= ''),  width = 12, height = 8, unit="cm",  fig6)
-  }
+ #idx <- sample(seq(1, dim(fat_rate_by_mmi)[1]), 50)
+ # PostPred <- rbind(as.double(mmi_list), as.double(fat_rate_by_mmi[1,]))
+ # PostPred <- as.data.frame(t(PostPred))
+ # fig6 <- fig6 + geom_line(data = PostPred, aes(x=V1, y=V2), colour='skyblue', size=0.1)
+ 
+# # Data with superimposed regression lines and noise distributions:
+ for ( i in idx ) {
+
+  PostPred$yComb <- exp(mcmcMat[i,"a"] + mcmcMat[i,"b"]*mmi_list)
+  #PostPred$xComb <- xComb
+
+  #PostPred$yComb <- as.double(fat_rate_by_mmi[i, ])
+  #PostPred$xComb <- mmi_list
+  fig6 <- fig6 + geom_line(data = PostPred, aes(x=xComb, y=yComb), colour='skyblue', size=0.1)
+  # fig6 <- fig6 + geom_point(data = PostPred, aes(x=xComb, y=yComb), colour='skyblue', size=0.1)
+  
+    }
+
+PostPred$sengara <- 10^(0.622*PostPred$xComb-8.033)
+
+fig6 <- fig6 + geom_line(data = PostPred, aes(x=xComb, y=sengara), linetype=2, size=0.5)
+
+fig6 <- fig6 + theme_bw(base_size=10) +
+xlab("MMI") + ylab("Fatality rate") 
+
+ggsave(paste(plotpath,'fig6_new',saveName, '.', saveType, sep= ''),  width = 16, height = 8, unit="cm",  fig6)
+
+
+#######
+# figure6 in linear scale
+#######
+fig6b <- ggplot(data = dat, aes(x=mmi, y=rat)) +
+  geom_point() +  
+  geom_errorbar(data = fat_rate_HDI, aes(ymax = U, ymin = L, y=0.5*(L+U), x = mmi), width=0.2, colour='red') +
+  scale_x_continuous(limits=c(4.0,10.0), breaks=seq(4.0, 10.0, 1.0))
+  
+  #scale_y_log10(labels = trans_format("log10", math_format(10^.x)),limits=c(10^-7, 10^-1))
+#geom_point(data = dat, aes(x=mmi, y=rat)) +
+# geom_errorbar(data = fat_rate_HDI, aes(ymax = U, ymin = L, y=0.5*(L+U), x = mmi), width=0.2, colour='red')
+# scale_y_log10(labels = trans_format("log10", math_format(10^.x)),limits=c(10^-7, 10^-1)) +
+# geom_errorbar(data = fat_rate_HDI, aes(ymax = U, ymin = L, y=0.5*(L+U), x = mmi), width=0.2, colour='red')
+# geom_errorbar(data = fat_rate_HDI, aes(ymax = U, ymin = L), width=0.2, colour='red')
+
+#nPredCurves=50
+yComb <- numeric(length=length(mmi_list))
+PostPred <- data.frame(yComb)
+PostPred$xComb <- mmi_list
+
+#idx <- sample(seq(1, dim(fat_rate_by_mmi)[1]), 50)
+# PostPred <- rbind(as.double(mmi_list), as.double(fat_rate_by_mmi[1,]))
+# PostPred <- as.data.frame(t(PostPred))
+# fig6 <- fig6 + geom_line(data = PostPred, aes(x=V1, y=V2), colour='skyblue', size=0.1)
+
+# # Data with superimposed regression lines and noise distributions:
+for ( i in idx ) {
+  
+  PostPred$yComb <- exp(mcmcMat[i,"a"] + mcmcMat[i,"b"]*mmi_list)
+  #PostPred$xComb <- xComb
+  
+  #PostPred$yComb <- as.double(fat_rate_by_mmi[i, ])
+  #PostPred$xComb <- mmi_list
+  fig6b <- fig6b + geom_line(data = PostPred, aes(x=xComb, y=yComb), colour='skyblue', size=0.1)
+  # fig6 <- fig6 + geom_point(data = PostPred, aes(x=xComb, y=yComb), colour='skyblue', size=0.1)
+  
 }
 
+PostPred$sengara <- 10^(0.622*PostPred$xComb-8.033)
+
+fig6b <- fig6b + geom_line(data = PostPred, aes(x=xComb, y=sengara), linetype=2, size=0.5)
+
+fig6b <- fig6b + theme_bw(base_size=10) +
+  xlab("MMI") + ylab("Fatality rate") 
+
+ggsave(paste(plotpath,'fig6b_new',saveName, '.', saveType, sep= ''),  width = 16, height = 8, unit="cm",  fig6b)
+
+
+# plot mu, and p, beta
+
+# # Data with superimposed regression lines and noise distributions:
+yComb <- numeric(length=length(mmi_list))
+PostPred <- data.frame(yComb)
+PostPred$xComb <- mmi_list
+
+########
+# mean
+########
+
+fig7 <- ggplot()
+for ( i in idx ) {
+  PostPred$yComb <- exp(mcmcMat[i, "a"] + mcmcMat[i, "b"]*PostPred$xComb)
+  fig7 <- fig7 + geom_line(data = PostPred, aes(x=xComb, y=yComb), colour='skyblue', size=0.1)
+}
+
+#####
+# sigma
+#####
+
+fig9 <- ggplot()
+for ( i in idx ) {
+  PostPred$yComb <- exp(mcmcMat[i, "a"] + mcmcMat[i, "b"]*PostPred$xComb)/sqrt(mcmcMat[i, "s"])
+  fig9 <- fig9 + geom_line(data = PostPred, aes(x=xComb, y=yComb), colour='skyblue', size=0.1)
+}
+
+#####
+# cov
+#####
+
+fig10 <- ggplot()
+for ( i in idx ) {
+  PostPred$yComb <- 1/sqrt(mcmcMat[i, "s"])
+  fig10 <- fig10 + geom_line(data = PostPred, aes(x=xComb, y=yComb), colour='skyblue', size=0.1)
+}
+
+
+#######
+# zero prob
+#######
+yComb <- numeric(length=length(mmi_list))
+PostPred <- data.frame(yComb)
+PostPred$xComb <- mmi_list
+PostPred$yComb <- prob_zero_by_mmi
+fig8 <- ggplot(data=PostPred, aes(x=xComb, y=yComb)) + 
+  geom_line() +
+  scale_x_continuous(limits=c(4.0,10.0), breaks=seq(4.0, 10.0, 1.0)) +
+  xlab("MMI") +
+  ylab("Probability of zero fatality rate") +
+  theme_bw(base_size=10)
+ggsave(paste(plotpath,'figure6b_zero_prob.eps',sep=""),  width = 8, height = 8, unit="cm",  fig8)
+
+####
 # fig 7a
 
 plot_prob_one_event <- function( prob_mag, k, expo_cat, saveName, saveType ) {
 
-  names_str <- c('0-10^0','10^0-10^1','10^1-10^2','10^2-10^3','10^3-10^4','10^4-10^5','10^5-10^6','10^7-10^8')
-
-  label_str <- c(expression(0-10^0), expression(10^0-10^1), expression(10^1-10^2), 
+  # names_str <- c('0-10^0','10^0-10^1','10^1-10^2','10^2-10^3','10^3-10^4','10^4-10^5','10^5-10^6','10^7-10^8')
+  names_str <- c('0-10^1','10^1-10^2','10^2-10^3','10^3-10^4','10^4-10^5','10^5-10^6','10^7-10^8')
+  
+  label_str <- c(expression(0-10^1), expression(10^1-10^2), 
     expression(10^2-10^3), expression(10^3-10^4), expression(10^4-10^5), 
     expression(10^5-10^6), expression(10^6-10^7))
 
@@ -225,7 +346,7 @@ plot_prob_one_event <- function( prob_mag, k, expo_cat, saveName, saveType ) {
 
   if ( !is.null(saveName) ) {
 
-    ggsave(paste('pb_',saveName, '.', saveType, sep= ''),  width = 8, height = 8, unit="cm",  myPlot)
+    ggsave(paste(plotpath, 'fig7b_', saveName, '.', saveType, sep= ''),  width = 8, height = 8, unit="cm",  myPlot)
 
   }
   return(myPlot) 
@@ -233,11 +354,12 @@ plot_prob_one_event <- function( prob_mag, k, expo_cat, saveName, saveType ) {
 
 # figure 7b
 # prob_mag <- readRDS('wald_berngamma_n15kprob_mag.RDS')
-prob_mag <- readRDS('./case3_berngamma_logit_prob_mag.RDS')
+prob_mag <- readRDS(paste(datapath, 'case3_berngamma_log_add_prob_mag.RDS', sep=""))
   
 # one event
 # histogram of one event (200006041628, Bengkulu, Indonesia) INDEX: 42
 k = 42
+saveName <- 'case3'
 myPlot3 <- plot_prob_one_event(prob_mag, k, expo_cat, saveName, saveType)
 
 # figure 7a
