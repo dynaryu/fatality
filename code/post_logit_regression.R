@@ -363,17 +363,19 @@ saveName <- 'case3'
 myPlot3 <- plot_prob_one_event(prob_mag, k, expo_cat, saveName, saveType)
 
 # figure 7a
-fat <- readRDS('wald_berngamma_n15kfat_by_event_42.RDS')
-fatHDI <- readRDS('wald_berngamma_n15kfatHDI.RDS')
-
-fat_event <- as.data.frame(fat)
+#fat <- readRDS('wald_berngamma_n15kfat_by_event_42.RDS')
+#fatHDI <- readRDS('wald_berngamma_n15kfatHDI.RDS')
+fat <- readRDS(paste(datapath, 'case3_berngamma_log_add_fat_by_event.RDS', sep=""))
+fatHDI <- readRDS(paste(datapath, 'case3_berngamma_log_add_fatHDI.RDS', sep=""))  
+fat_event <- as.data.frame(fat[k,])
+names(fat_event) <- c('fat')
 
 event1_ <- matrix(NA, ncol=3, nrow=1)
 event1_[1,1] <- expo_cat$obs[k]
 event1_[1,2] <- expo_cat$mag_obs[k]
 event1_[1,3] <- 0
 event1_ <- data.frame(event1_)
-names(event1_) <- c('obs','x','y')
+names(event1_) <- c('obs', 'x', 'y')
 
 #fatHDI <- HDIofMCMC(fat_event$fat)
 fatHDI_ <- fatHDI[k,]
@@ -394,13 +396,12 @@ fatHDI_$y <- c(0.0,0.0)
 #fatHDI$obs[expo_cat$obs==0] = NA
 
 myPlot1 <- ggplot(fat_event,aes(x=fat)) +
-    geom_histogram() +
-
-      #geom_histogram(aes(y=..count../sum(..count..)), fill='grey') +
+    #geom_histogram() +
+      geom_histogram(aes(y=..count../sum(..count..)), fill='grey') +
           #geom_histogram(aes(y = ..density..), fill='cyan') +
     scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
                    labels = trans_format("log10", math_format(10^.x)),
-    #               limits = c(10^-1, 10^4)) +
+                   limits = c(10^-1, 10^4)) +
     geom_point(data=event1_,aes(obs,y), col='red', size=3) + #, shape='x'
     geom_line(data = fatHDI_, aes(x=fatHDI_, y=y), size=0.5) +
     geom_point(data = fatHDI_, aes(x=fatHDI_, y=y), shape='|', size=2) +
@@ -408,6 +409,6 @@ myPlot1 <- ggplot(fat_event,aes(x=fat)) +
     xlab("Fatality") +
     theme_bw(base_size=10)
 
-ggsave(paste('figure7a_',saveName,'.', saveType, sep=''),  width = 8, height = 8, unit="cm",  myPlot1)
+ggsave(paste(plotpath,'figure7a_',saveName,'.', saveType, sep=''),  width = 8, height = 8, unit="cm",  myPlot1)
 
 
