@@ -15,12 +15,12 @@ cat(paste0(bannerBreak,bookInfo,bannerBreak,"\n"))
 #------------------------------------------------------------------------------
 # Check that required packages are installed:
 #want = c("parallel","rjags","runjags")
-want = c("parallel","rjags")
-have = want %in% rownames(installed.packages())
-if ( any(!have) ) { install.packages( want[!have] ) }
+#want = c("parallel","rjags")
+#have = want %in% rownames(installed.packages())
+#if ( any(!have) ) { install.packages( want[!have] ) }
 
 # Load parallel package for detectCores function:
-library(parallel)
+#library(parallel)
 # Set some options in runjags:
 #library(runjags)
 #runjags.options( inits.warning=FALSE , rng.warning=FALSE )

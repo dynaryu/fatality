@@ -8,17 +8,17 @@ library(scales)
 library(reshape2)
 
 process_csvdata <- function(csvfileName) {
-  
+
   dat <- read.csv(csvfileName, header=0)
   names(dat) <- c("pop","fat","mmi","mmi_bin","id")
-  
+
   #dat$fat[dat$fat==0] = 1.0e-3 # very small number instead of 0 fatality
   dat$rat <- dat$fat/dat$pop
   ndat <- dat[dat$fat > 0, ]
-  
+
   #dat.df <- data.frame(dat$mmi, dat$rat)
   #names(dat.df) <- c("MMI","rate")
-  
+
   #saveRDS()
   return(ndat)
 }
@@ -56,9 +56,8 @@ dat3 <- process_csvdata(paste(datapath,'case3.csv', sep=""))
 #  xlab("MMI") +
 #  ylab("Fatality rate") +
 #  theme_bw(base_size=10)
-# 
+#
 # ggsave('figure4b.eps',  width = 8, height = 8, unit="cm",  myPlot7)
-
 
 myPlot8 <- ggplot(dat1, aes(x=factor(mmi_bin),y=rat)) +
   geom_boxplot() +
@@ -67,7 +66,16 @@ myPlot8 <- ggplot(dat1, aes(x=factor(mmi_bin),y=rat)) +
   xlab("MMI") +
   ylab("Fatality rate") +
   theme_bw(base_size=10)
-ggsave(paste(plotpath,'figure4a_case1.eps', sep=""), width = 12, height = 8, unit="cm",  myPlot8)
+ggsave(paste(plotpath,'figure4a_case1_log.eps', sep=""), width = 8, height = 8, unit="cm",  myPlot8)
+
+myPlot8a <- ggplot(dat1, aes(x=factor(mmi_bin),y=rat)) +
+  geom_boxplot() +
+  geom_point(position = position_jitter(width = 0.3), size=0.5, colour='red')+
+  xlab("MMI") +
+  ylab("Fatality rate") +
+  theme_bw(base_size=10)
+ggsave(paste(plotpath,'figure4a_case1_linear.eps', sep=""), width = 8, height = 8, unit="cm",  myPlot8a)
+
 
 myPlot8b <- ggplot(dat3, aes(x=factor(mmi_bin),y=rat)) +
   geom_boxplot() +
@@ -89,7 +97,7 @@ ggsave(paste(plotpath,'figure4a_case3.eps', sep=""), width = 12, height = 8, uni
 #     }
 #     return(value)
 # }
-# 
+#
 # myPlot9 <- ggplot(dat_total, aes(x=mmi_bin,y=rat)) +
 #  geom_boxplot() +
 #  facet_grid(~id, labeller = mf_labeller) +
@@ -180,7 +188,7 @@ ggsave(paste(plotpath,'figure3_by_setting.eps', sep=""),  width = 16, height = 8
 #  theme(legend.position="right", legend.key = element_rect(colour = NA),
 #   legend.title = element_text(size = 6),
 #   legend.text=element_text(size=6))
-# 
+#
 # ggsave('figure6.eps',  width = 16, height = 8, unit="cm",  myPlot)
 
 

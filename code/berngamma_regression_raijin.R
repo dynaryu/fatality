@@ -1,5 +1,5 @@
 # extension of bernlnorm_stan.R
-#------------------------------------------------------------------------------- 
+#-------------------------------------------------------------------------------
 graphics.off() # This closes all of R's graphics windows.
 rm(list=ls())  # Careful! This clears all of R's memory!
 require(rstan)
@@ -11,13 +11,13 @@ if (Sys.info()['sysname']=="Darwin") {
   comPath = '/Users/hyeuk/Projects/fatality/'
   codePath = paste(comPath,'code/',sep="")
   plotPath = paste(comPath,'plot/',sep="")
-  dataPath = paste(comPath,'data/',sep="") 
+  dataPath = paste(comPath,'data/',sep="")
   saveType='eps'
 } else {
   comPath = '/home/547/hxr547/Projects/fatality/'
   codePath = paste(comPath,'code/',sep="")
   plotPath = paste(comPath,'plot/',sep="")
-  dataPath = paste(comPath,'data/',sep="") 
+  dataPath = paste(comPath,'data/',sep="")
   saveType='pdf'
 }
 
@@ -29,7 +29,8 @@ source(paste(codePath,"utilities.R",sep=""))
 source(paste(codePath,"stan_models.R",sep=""))
 
 data_str = 'case3'
-link_str = 'log_add'
+#link_str = 'log_add'
+link_str = 'binomial'
 saveName = paste(data_str,'_berngamma_',link_str,sep="")
 marPlot = TRUE;
 
@@ -38,6 +39,8 @@ if (link_str=='log') {
   stanDso <- stan_model( model_code = model_berngamma_log)
 } else if (link_str=='log_add') {
   stanDso <- stan_model( model_code = model_berngamma_log_add)
+} else if (link_str=='binomial') {
+  stanDso <- stan_model( model_code = model_binomialgamma_log_add)
 } else if (link_str=='logit') {
   stanDso <- stan_model( model_code = model_berngamma_logit)
 }
@@ -63,25 +66,37 @@ pop <- dummy[[1]]
 expo_cat <- dummy[[2]]
 mmi_list <- dummy[[3]]
 
-dataList = list(
-  x = dat$mmi, 
-  y = dat$rat,
-  Ndata = length(dat$mmi),
-  Nnew = length(mmi_list),
-  xnew = mmi_list
-)
+if (link_str=='binomial') {
+    dataList = list(
+      x = dat$mmi,
+      y = dat$rat,
+      pop = dat$pop,
+      fat = dat$fat,
+      Ndata = length(dat$mmi),
+      Nnew = length(mmi_list),
+      xnew = mmi_list
+    )
+} else {
+    dataList = list(
+      x = dat$mmi,
+      y = dat$rat,
+      Ndata = length(dat$mmi),
+      Nnew = length(mmi_list),
+      xnew = mmi_list
+    )
+}
 
 nChains = 4
 burnInSteps = 1000
 iterSteps = burnInSteps + 8000
 
 # Get MC sample of posterior:
-stanFit <- sampling( object=stanDso , 
-                     data = dataList , 
+stanFit <- sampling( object=stanDso ,
+                     data = dataList ,
                      #pars = parameters , # optional
                      chains = nChains ,
-                     iter = iterSteps , 
-                     warmup = burnInSteps , 
+                     iter = iterSteps ,
+                     warmup = burnInSteps ,
                      #init = initsList , # optional
                      thin = 1 )
 
@@ -90,14 +105,14 @@ stanFit <- sampling( object=stanDso ,
 #paramNames <- paramNames[-length(paramNames)] # remove the last
 
 # diagplot #2
-codaSamples = mcmc.list( lapply( 1:ncol(stanFit) , 
+codaSamples = mcmc.list( lapply( 1:ncol(stanFit) ,
                                  function(x) { mcmc(as.array(stanFit)[,x,]) } ) )
 #paramNames = varnames(codaSamples)
 #paramNames <- paramNames[-length(paramNames)] # remove the last
 paramNames <- c('a','b','c','d','s')
 
 for ( parName in paramNames ) {
-  diagMCMC( codaObject=codaSamples, parName=parName , 
+  diagMCMC( codaObject=codaSamples, parName=parName ,
           saveName=paste(plotPath,saveName,'_',sep=""), saveType=saveType)
 }
 
@@ -124,13 +139,13 @@ for ( parName in paramNames ) {
 chain$dummy <- NULL
 row.names(summaryInfo) <- paramNames
 
-if (marPlot) { 
+if (marPlot) {
 
   if (Sys.info()['sysname']=="Linux") {
     png(file=paste(plotPath,saveName,"_PostMarg.png",sep=""), height=3*2, width=3*3, units="in", res=600)
   } else {
     openGraph(width=3*3, height=3*2)
-  }  
+  }
 
   # layout( matrix( 1:6 , nrow=2, byrow=TRUE) )
 
@@ -139,28 +154,28 @@ if (marPlot) {
   # }
 
   layout( matrix( 1:6 , nrow=2) )
-  
+
   histInfo = plotPost( chain[['a']] , cex.lab = 1.75 , showCurve=FALSE, xlab=bquote(a)) #, main=paste("a=",parameters$a) )
   histInfo = plotPost( chain[['c']] , cex.lab = 1.75 , showCurve=FALSE, xlab=bquote(c)) #, main=paste("a=",parameters$a) )
   histInfo = plotPost( chain[['b']] , cex.lab = 1.75 , showCurve=FALSE, xlab=bquote(b)) #, main=paste("a=",parameters$a) )
   histInfo = plotPost( chain[['d']] , cex.lab = 1.75 , showCurve=FALSE, xlab=bquote(d)) #, main=paste("a=",parameters$a) )
   histInfo = plotPost( chain[['s']] , cex.lab = 1.75 , showCurve=FALSE, xlab=bquote(alpha)) #, main=paste("a=",parameters$a) )
-  
+
   # saveGraph( file=paste(plotpath,"figure5.eps",sep=""), type=saveType)
-  
+
   if ( !is.null(saveName) ) {
     if (Sys.info()['sysname']=="Linux") {
       dev.off()
     } else {
       saveGraph( file=paste(plotPath, saveName,"_PostMarg",sep=""), type=saveType)
-    }  
+    }
   }
 }
 
 # extract predicted fatality rate by MMI
 sel_col <- vector("character", length(mmi_list))
-for (i in seq(1, length(mmi_list))) { 
-  sel_col[[i]] <- paste('ynew[', i, ']', sep='') 
+for (i in seq(1, length(mmi_list))) {
+  sel_col[[i]] <- paste('ynew[', i, ']', sep='')
 }
 fat_rate_by_mmi <- mcmcMat[, sel_col]
 
@@ -176,10 +191,10 @@ fat_rate_by_mmi <- mcmcMat[, sel_col]
 # remove any fatality rate >= 1.0
 #ff <- which(fat_rate >= 1.0, arr.ind=TRUE)
 #if (nrow(ff) > 0) {
-#  fat_rate <- fat_rate[,-ff[,2]] 
+#  fat_rate <- fat_rate[,-ff[,2]]
 #}
 
-fat_by_event <- pop %*% t(fat_rate_by_mmi) # nevents x (nsamples*chainLength) 
+fat_by_event <- pop %*% t(fat_rate_by_mmi) # nevents x (nsamples*chainLength)
 
 # HDI of estimated fatality
 dummy = compute_HDI_prob(fat_by_event)
@@ -191,7 +206,7 @@ show(count_order)
 
 if ( !is.null(saveName) ) {
   saveRDS(mcmcMat, file=paste(dataPath,saveName,'_mcmcMat.RDS',sep=""))
-  write.csv(summaryInfo , file=paste(dataPath,saveName,"_SummaryInfo.csv",sep="")) 
+  write.csv(summaryInfo , file=paste(dataPath,saveName,"_SummaryInfo.csv",sep=""))
   #saveRDS(fat_rate, file=paste(dataPath,saveName,'_fat_rate.RDS',sep=''))
 
   #df.fat_rate <- as.data.frame(t(fat_rate))
@@ -200,7 +215,7 @@ if ( !is.null(saveName) ) {
   #inasafe_mmi_list <- seq(4.0, 10.0)
   #df.fat_rate_inasafe <- df.fat_rate[as.character(inasafe_mmi_list)]
   #write.csv(df.fat_rate_inasafe, file=paste(dataPath,saveName,'_fat_rate_inasafe.csv',sep=""), row.names=FALSE)
- 
+
   #saveRDS(fat_rate_HDI, file=paste(dataPath,saveName,'_fat_rate_HDI.RDS',sep=''))
   write.csv(fat_rate_by_mmi, file=paste(dataPath,saveName,'_fat_rate_by_mmi.csv',sep=""), row.names=FALSE)
   saveRDS(fat_by_event, paste(dataPath,saveName, '_fat_by_event.RDS',sep=""))
