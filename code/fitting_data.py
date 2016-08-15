@@ -99,11 +99,17 @@ def make_pdf(dist, params, size=10000):
 
 # Load data from statsmodels datasets
 #data = pd.Series(sm.datasets.elnino.load_pandas().data.set_index('YEAR').values.ravel())
+dat1 = pd.read_csv('../data/case1.csv', header=None)
+dat1.columns = ['pop','fat','mmi_bin','mmi','id']
+#mmi85= dat1.loc[(dat1['fat']>0) & (dat1['mmi_bin']==8.0), 'fat']
+mmi85= dat1.loc[(dat1['fat']>0) & (dat1['mmi_bin']==7.0), 'fat']
 
 # Plot for comparison
 plt.figure(figsize=(12,8))
+
 data = pd.Series(mmi85)
-ax = data.plot(kind='hist', bins=50, normed=True, alpha=0.5, color=plt.rcParams['axes.color_cycle'][1])
+ax = data.plot(kind='hist', bins=50, normed=True, alpha=0.5,
+    color=plt.rcParams['axes.color_cycle'][1])
 #ax = plt.hist(mmi75, bins=50, normed=True, alpha=0.5, color=plt.rcParams['axes.color_cycle'][1])
 # Save plot limits
 dataYLim = ax.get_ylim()
@@ -127,7 +133,7 @@ ax = pdf.plot(lw=2, label='PDF', legend=True)
 data.plot(kind='hist', bins=50, normed=True, alpha=0.5, label='Data', legend=True, ax=ax)
 
 param_names = (best_dist.shapes + ', loc, scale').split(', ') if best_dist.shapes else ['loc', 'scale']
-param_str = ', '.join(['{}={:0.2f}'.format(k,v) for k,v in zip(param_names, best_fir_paramms)])
+param_str = ', '.join(['{}={:0.2f}'.format(k,v) for k,v in zip(param_names, best_fit_paramms)])
 dist_str = '{}({})'.format(best_fit_name, param_str)
 
 #ax.set_title(u'El Niño sea temp. with best fit distribution \n' + dist_str)

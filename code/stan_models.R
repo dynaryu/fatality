@@ -71,6 +71,50 @@ generated quantities{
 }
 "
 
+# same as bernoullie-log-normal but added generated quantities for prediction
+model_bernlnorm_add_hi = "
+data {
+  int<lower=0> Ndata ;
+  vector<lower=0>[Ndata] x ; // MMI
+  vector<lower=0, upper=1>[Ndata] y ; // fatality rate
+
+  int<lower=0> Nnew ;
+  vector[Nnew] xnew ; // xnew
+
+  int<lower=1> N_mmi; //
+  int<lower=1,upper=N_mmi> mmi_bin[Ndata]; //
+
+}
+parameters {
+  real a; // parameter of linear predictor
+  real b; // a+bx
+  real c; // parameter of linear predictor
+  real d; // c+dx
+  real<lower=0> s[N_mmi]; // sigma lognormal constant cov
+}
+model {
+  a ~ cauchy(0, 2.5);
+  b ~ cauchy(0, 2.5);
+  c ~ cauchy(0, 2.5);
+  d ~ cauchy(0, 2.5);
+  s ~ cauchy(0, 2.5); // half cauchy
+
+  for (n in 1:Ndata) {
+  (y[n] == 0) ~ bernoulli_logit(c + d * x[n]);
+  if (y[n] > 0)
+     y[n] ~ lognormal(a + b*x[n], s[mmi_bin[n]]);
+  }
+}
+generated quantities{
+  vector[Nnew] ynew ;
+  for (n in 1:Nnew) {
+    ynew[n] <- bernoulli_rng(1.0 - inv_logit(c + d*xnew[n]));
+    if (ynew[n] > 0)
+      ynew[n] <- lognormal_rng(a + b*xnew[n], s[mmi_bin[n]]);
+   }
+}
+"
+
 # bernoullie-gamma truncated [0, 1]
 # took so long
 # note that gamma in stan takes shape(alpha) and rate(beta)

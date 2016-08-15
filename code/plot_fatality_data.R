@@ -38,10 +38,11 @@ dat3 <- process_csvdata(paste(datapath,'case3.csv', sep="")) # EXPO-CAT
 # exploratory analysis
 # dat <- dat_worden
 
-#sd_ <- tapply(dat$rat, dat$mmi_bin, sd)
+sd_ <- tapply(dat$rat, dat$mmi_bin, sd)
 
-#mean_ <- tapply(dat$rat, dat$mmi_bin, mean)
+mean_ <- tapply(dat$rat, dat$mmi_bin, mean)
 
+cov_ <-
 #X11()
 #qplot(names(sd_), log(mean_)) + xlab("MMI") + ylab("log mean of fatality rate")
 #dev.copy2eps(file='log_mean_fatality.eps')
@@ -212,6 +213,7 @@ rownames(df) <- as.character(seq(1, dim(df)[1]))
 myPlot3 <- ggplot(data=df, aes_string(x='mmi_bin', y='prob_zero')) +
   geom_point(size=1.0) +      # Use hollow circles
   scale_y_continuous(limits=c(0,1.0), breaks=seq(0.0, 1.0, 0.2)) +
+  scale_x_continuous(limits=c(4.0,8.0), breaks=seq(4.0, 8.0, 0.5)) +
   #facet_wrap(~GMICE,ncol=2) +
   #scale_shape_manual(values=c(15,16,17,18)) + # Use a hollow circle and triangle
   #scale_shape_discrete(name="EQ event",
@@ -220,14 +222,17 @@ myPlot3 <- ggplot(data=df, aes_string(x='mmi_bin', y='prob_zero')) +
   #guides(color=guide_legend(override.aes=list(fill=NA))) +
   #guides(colour = guide_legend(nrow = 2)) +
   xlab("MMI") +
-  ylab("Probability of zero fatality") +
+  ylab("Normalised frequency of zero fatality") +
   theme_bw(base_size=10)
 
-ggsave(paste(plotpath,'prob_zero_data.eps', sep=""), width = 8, height = 8, unit="cm",  myPlot3)
+ggsave(paste(plotpath,'prob_zero_data_v1.eps', sep=""), width = 8, height = 8, unit="cm",  myPlot3)
 
 # read fat_rate_by_mmi
-fat_rate_by_mmi <- read.csv(paste(datapath, 'case1_berngamma_log_add_fat_rate_by_mmi.csv', sep=""))
-colnames(fat_rate_by_mmi) <- as.character(seq(4, 10, 0.5))
+#fat_rate_by_mmi <- read.csv(paste(datapath, 'case1_berngamma_log_add_fat_rate_by_mmi.csv', sep=""))
+#fat_rate_by_mmi <- read.csv(paste(datapath, 'case3_berngamma_log_add_fat_rate_by_mmi.csv', sep=""))
+mmi_list = seq(4.0, 10.0, 0.5)
+fat_rate_by_mmi <- read.csv(paste(datapath, 'case1_berngamma_lognorm_add_fat_rate_by_mmi.csv', sep=""))
+colnames(fat_rate_by_mmi) <- as.character(mmi_list)
 
 # zero
 prob_zero_by_mmi <- apply(fat_rate_by_mmi==0, FUN=sum, MARGIN = 2)/dim(fat_rate_by_mmi)[1]
@@ -247,7 +252,7 @@ myPlot4 <- ggplot(data=combined, aes(mmi_bin, y = value, shape = variable)) +
   theme_bw(base_size=10) +
   theme(legend.title=element_blank(), legend.position=c(0.82, 0.87))
 
-ggsave(paste(plotpath,'prob_zero_data_comb.eps', sep=""), width = 8, height = 8, unit="cm",  myPlot4)
+ggsave(paste(plotpath,'prob_zero_data_comb_case1_lognorm.eps', sep=""), width = 8, height = 8, unit="cm",  myPlot4)
 
 # boxplot showing observed vs predicted
 # only 7, 7.5, 8 for comparison
@@ -262,37 +267,18 @@ sel_dat_non_zero <- dat_non_zero[dat_non_zero$mmi_bin %in% c(7, 7.5, 8), ]
 sel_dat_non_zero$kind <- factor('observed')
 names(sel_dat_non_zero) <- c("mmi_bin","value","kind")
 
-combined_df <- merge(melted_non_zero, sel_dat_non_zero, by=c('mmi_bin','kind','value'), all=1)
+combined_df <- merge(sel_dat_non_zero, melted_non_zero, by=c('mmi_bin','kind','value'), all=1)
 
-myPlot5 <- ggplot(data=combined_df, aes(x=factor(kind), y=value)) +
-  geom_boxplot() +
-  facet_grid(~mmi_bin) +
-  scale_y_log10(labels = trans_format("log10", math_format(10^.x)),limits=c(10^-7, 10^-1)) +
-
-  #facet_wrap(~mmi_bin)
-  #geom_point(size=0.5) +      # Use hollow circles
-  #scale_x_continuous(limits=c(3.5,9.5), breaks=seq(4.0, 9.0, 1.0)) +
-  #scale_y_log10(labels = trans_format("log10", math_format(10^.x)),limits=c(10^-7, 10^-1)) +
-
-
-myPlot8b <- ggplot(dat3, aes(x=factor(mmi_bin),y=rat)) +
-  geom_boxplot() +
-
-
-
-myPlot5 <- ggplot(data = melt(fat_rate_by_mmi), aes(x=variable, y=value)) +
- geom_boxplot() +
-  scale_y_log10(labels = trans_format("log10", math_format(10^.x)),limits=c(10^-7, 10^-1)) +
-  #scale_y_log10() +
-  geom_boxplot(dat, aes(x=factor(mmi_bin),y=rate)
-
-  xlab("MMI") +
-  ylab("Fatality rate") +
-  theme_bw(base_size=10)
-
-  geom_point(position = position_jitter(width = 0.3), size=0.5, colour='red')+
+myPlot5 <- ggplot(data=combined_df, aes(x=mmi_bin, y=value, fill=kind)) +
+  geom_boxplot(size=0.5, outlier.size=0.5) +
+  scale_fill_manual(name = element_blank(), values = c("white", "grey") )+
+                    #, labels = c("0" = "Foo", "1" = "Bar"))
   scale_y_log10(labels = trans_format("log10", math_format(10^.x)),limits=c(10^-7, 10^-1)) +
   xlab("MMI") +
   ylab("Fatality rate") +
-  theme_bw(base_size=10)
-ggsave(paste(plotpath,'figure4a_case1_log.eps', sep=""), width = 8, height = 8, unit="cm",  myPlot8)
+  theme_bw(base_size=10) +
+  theme(legend.position=c(0.82, 0.13), legend.key.size=unit(0.5, "cm"))
+
+ggsave(paste(plotpath,'non_zero_fat_log_case1_lognorm.eps', sep=""), width = 8, height = 8, unit="cm",  myPlot5)
+
+

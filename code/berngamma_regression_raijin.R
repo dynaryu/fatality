@@ -28,9 +28,10 @@ source(paste(codePath,"utilities.R",sep=""))
 # load stan models
 source(paste(codePath,"stan_models.R",sep=""))
 
-data_str = 'case3'
+data_str = 'case1'
 #link_str = 'log_add'
-link_str = 'binomial'
+#link_str = 'binomial'
+link_str = 'hi'
 saveName = paste(data_str,'_berngamma_',link_str,sep="")
 marPlot = TRUE;
 
@@ -43,6 +44,8 @@ if (link_str=='log') {
   stanDso <- stan_model( model_code = model_binomialgamma_log_add)
 } else if (link_str=='logit') {
   stanDso <- stan_model( model_code = model_berngamma_logit)
+} else if (link_str=='hi') {
+  stanDso <- stan_model( model_code = model_bernlnorm_add_hi)
 }
 
 # read fatality data
@@ -66,6 +69,8 @@ pop <- dummy[[1]]
 expo_cat <- dummy[[2]]
 mmi_list <- dummy[[3]]
 
+dat$mmi_id <- sapply(dat$mmi,function(x) which(mmi_list==x))
+
 if (link_str=='binomial') {
     dataList = list(
       x = dat$mmi,
@@ -73,6 +78,16 @@ if (link_str=='binomial') {
       pop = dat$pop,
       fat = dat$fat,
       Ndata = length(dat$mmi),
+      Nnew = length(mmi_list),
+      xnew = mmi_list
+    )
+} else if (link_str=='hi') {
+    dataList = list(
+      x = dat$mmi,
+      y = dat$rat,
+      Ndata = length(dat$mmi),
+      N_mmi = length(mmi_list),
+      mmi_bin = dat$mmi_id,
       Nnew = length(mmi_list),
       xnew = mmi_list
     )
